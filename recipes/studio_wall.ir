@@ -1,0 +1,52 @@
+// studio_wall — demo recipe (units: mm)
+// A parametric wall with a centered window and a door opening, a colonnade
+// (repeat_x pattern), and a filleted pedestal (the fillet is B-rep-only:
+// it exercises per-element fallback on mesh kernels).
+//
+// Note the symbolic expressions: the window x-position is
+// (wall_len - win_w) / 2 — a *relation*, carried in the IR, never baked
+// to a constant. Change wall_len and the window stays centered on any
+// kernel. This is the Relax "first-class symbolic shape" idea.
+
+recipe.module @studio_wall {
+  %wall_len = recipe.param "wall_len", 6000.0
+  %wall_t   = recipe.param "wall_t", 300.0
+  %wall_h   = recipe.param "wall_h", 3000.0
+  %win_w    = recipe.param "win_w", 1500.0
+  %win_h    = recipe.param "win_h", 1200.0
+  %sill_h   = recipe.param "sill_h", 900.0
+  %door_w   = recipe.param "door_w", 900.0
+  %door_h   = recipe.param "door_h", 2100.0
+  %door_off = recipe.param "door_off", 600.0
+  %col_r    = recipe.param "col_r", 150.0
+  %col_h    = recipe.param "col_h", 2800.0
+  %col_n    = recipe.param "col_n", 3.0
+  %col_gap  = recipe.param "col_gap", 2000.0
+  %fillet_r = recipe.param "fillet_r", 20.0
+
+  // window centered horizontally (symbolic relation, not a constant)
+  %free     = expr.sub %wall_len, %win_w
+  %win_x    = expr.div %free, 2.0
+
+  // door cut overshoots by 1mm below floor for a clean boolean
+  %door_hc  = expr.add %door_h, 1.0
+
+  %wall0    = geom.box %wall_len, %wall_t, %wall_h
+  %win_box  = geom.box %win_w, 500.0, %win_h
+  %win_cut  = geom.translate %win_box, [%win_x, -100.0, %sill_h]
+  %wall1    = geom.difference %wall0, %win_cut
+  %door_box = geom.box %door_w, 500.0, %door_hc
+  %door_cut = geom.translate %door_box, [%door_off, -100.0, -1.0]
+  %wall     = geom.difference %wall1, %door_cut
+  recipe.export %wall, "wall"
+
+  %col      = geom.cylinder %col_r, %col_h
+  %cols     = geom.repeat_x %col, %col_n, %col_gap
+  %colonnade = geom.translate %cols, [1000.0, 1200.0, 0.0]
+  recipe.export %colonnade, "colonnade"
+
+  %ped0     = geom.box 800.0, 800.0, 450.0
+  %ped1     = geom.fillet %ped0, %fillet_r
+  %pedestal = geom.translate %ped1, [2600.0, 1900.0, 0.0]
+  recipe.export %pedestal, "pedestal"
+}

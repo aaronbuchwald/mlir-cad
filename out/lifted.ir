@@ -1,0 +1,31 @@
+recipe.module @studio_wall {
+  %wall_len = recipe.param "wall_len", 6000.0
+  %wall_t = recipe.param "wall_t", 300.0
+  %wall_h = recipe.param "wall_h", 3000.0
+  %win_w = recipe.param "win_w", 1500.0
+  %win_h = recipe.param "win_h", 1200.0
+  %sill_h = recipe.param "sill_h", 900.0
+  %door_w = recipe.param "door_w", 900.0
+  %door_h = recipe.param "door_h", 2100.0
+  %door_off = recipe.param "door_off", 600.0
+  %col_r = recipe.param "col_r", 150.0
+  %col_h = recipe.param "col_h", 2800.0
+  %col_n = recipe.param "col_n", 3.0
+  %col_gap = recipe.param "col_gap", 2000.0
+  %fillet_r = recipe.param "fillet_r", 20.0
+  %t1 = geom.box %wall_len, %wall_t, %wall_h
+  %t3 = geom.box %win_w, 500.0, %win_h
+  %t4 = expr.sub %wall_len, %win_w
+  %t5 = expr.div %t4, 2.0
+  %t6 = geom.translate %t3, [%t5, -100.0, %sill_h]
+  %t2 = geom.difference %t1, %t6
+  %t9 = expr.add %door_h, 1.0
+  %t8 = geom.box %door_w, 500.0, %t9
+  %t10 = geom.translate %t8, [%door_off, -100.0, -1.0]
+  %t7 = geom.difference %t2, %t10
+  recipe.export %t7, "wall"
+  %t11 = geom.cylinder %col_r, %col_h
+  %t12 = geom.repeat_x %t11, %col_n, %col_gap
+  %t13 = geom.translate %t12, [1000.0, 1200.0, 0.0]
+  recipe.export %t13, "colonnade"
+}

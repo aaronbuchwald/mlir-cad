@@ -1,0 +1,112 @@
+# CLAUDE.md — repo index & context for future sessions
+
+## What this is
+
+An analysis of why AEC/CAD tools cannot round-trip models (IFC as one-way
+lossy "object code") and a **working demo** of the proposed fix: an
+MLIR-style multi-level IR ("geomir") lowered onto two open-source kernels
+with genuinely different math — OCCT (FreeCAD's exact B-rep, via CadQuery)
+and Manifold (OpenSCAD's polyhedral boolean engine) — exchanged via an
+artifact carrying recipe + baked oracle, validated with a Relax-style
+match_cast tolerance contract, degrading per element, and lowered to /
+lifted from OpenSCAD source.
+
+## Read in this order
+
+1. `docs/HANDOFF.md` — session handoff: thesis, what's proven, verification
+   boundaries, next steps, resume prompt. **Start here.**
+2. `docs/aec-geometry-ir-analysis.md` — the full analysis report (the "why").
+3. `README.md` — demo quickstart and act-by-act walkthrough (the "what").
+4. `docs/research/` — sourced research notes behind the report.
+
+## File index
+
+```
+CLAUDE.md                          this index
+README.md                          demo quickstart + what each act proves
+docs/
+  HANDOFF.md                       continuation handoff (state, next steps)
+  aec-geometry-ir-analysis.md      main analysis report (kernels, IFC, LLVM/
+                                   MLIR/Relax mapping, viable architecture)
+  research/
+    kernels.md                     per-tool kernels/representations, tolerance
+                                   models, D-Cubed; sourced + flagged
+    interop-landscape.md           IFC4/IFC5, STEP AP242, USD/AOUSD, Speckle,
+                                   healing middleware; sourced + flagged
+    compilers-for-cad.md           e-graphs, program-synthesis lifting,
+                                   persistent naming, the "no MLIR-for-CAD
+                                   exists" gap; sourced + flagged
+geomir/
+  ir.py                            recipe dialect: OP_SPECS, parser, canonical
+                                   printer, verifier (SSA, kinds, exports)
+  eval.py                          progressive lowering onto a backend;
+                                   UnsupportedOp; per-element evaluation
+  artifact.py                      exchange artifact (recipe + baked oracle),
+                                   match_cast import (LIVE/FALLBACK/DIVERGED),
+                                   post-import regenerate
+  scad.py                          lowering to OpenSCAD source (live params,
+                                   expressions, for-loops, import() fallback)
+                                   + lifter for the emitted subset
+  backends/occt.py                 OCCT/CadQuery — exact B-rep  [FreeCAD math]
+  backends/manifold_backend.py     Manifold — polyhedral mesh   [OpenSCAD math]
+  backends/sampler.py              pure-numpy point-membership kernel (test
+                                   oracle; third math: implicit membership)
+recipes/studio_wall.ir             demo model: wall+window+door (symbolic
+                                   centering expr), colonnade (repeat_x),
+                                   filleted pedestal (B-rep-only op)
+demo.py                            six-act walkthrough (see README)
+smoke_kernels.py                   kernel API drift canary — run first on a
+                                   new machine; exact expected volumes
+tests/run_tests.py                 29 pure-Python checks, no kernels needed
+setup.sh / requirements.txt        venv + cadquery, manifold3d, trimesh, numpy
+out/                               committed reference outputs from the
+                                   verified macOS run (2026-07-04):
+                                   model.step (FreeCAD), model.scad
+                                   (OpenSCAD, live params), model_manifold
+                                   .stl, studio_wall.artifact.json (the
+                                   exchange artifact), lifted.ir,
+                                   pedestal_baked.stl — regenerable via
+                                   `python demo.py`
+```
+
+## Running
+
+```bash
+./setup.sh                              # venv + installs + tests + smoke
+source .venv/bin/activate && python demo.py
+python tests/run_tests.py               # pure-Python, runs anywhere
+```
+
+Python 3.10–3.12 (cadquery wheel range). FreeCAD/OpenSCAD optional, for
+viewing `out/model.step` / `out/model.scad`.
+
+## Verification state (as of 2026-07-04 handoff)
+
+- 29/29 pure-Python checks pass (IR round-trip, sampler volumes vs closed
+  form, match_cast/fallback/divergence, scad emit→lift fixed point).
+- **Full demo verified end-to-end on macOS with real kernels** — OCCT
+  volumes exact to closed form (colonnade = 3·π·r²·h to the decimal);
+  reference outputs committed in `out/` (regenerable via `python demo.py`).
+- On new machines `smoke_kernels.py` (run by setup.sh) pins exact expected
+  volumes to catch cadquery/manifold3d API drift; see `docs/HANDOFF.md`
+  §Verification for the drift-sensitive spots.
+
+## Conventions & invariants
+
+- Units: mm. Default match_cast contract: 0.5% relative volume + 1mm bbox.
+- The element (recipe.export) is the unit of fallback — never the file.
+- Symbolic expressions are never baked: parameters and expr.* relations
+  survive lowering (including into emitted .scad).
+- Faceting (`circular_segments`, `$fn`) is backend lowering policy, not part
+  of the recipe.
+- The scad lifter only parses the subset the emitter produces (documented in
+  `geomir/scad.py`); baked `import()` elements are honestly unliftable.
+- Dialect is deliberately tiny (see `OP_SPECS` in `geomir/ir.py`); add ops
+  there + evaluator case + each backend + scad emit/lift + tests together.
+
+## For future assistant sessions
+
+Research notes carry per-claim source URLs verified July 2026, with
+explicitly flagged uncertainties — re-verify time-sensitive claims (IFC5
+status, AOUSD, vendor APIs) before relying on them. Next-step menu and a
+paste-ready resume prompt live in `docs/HANDOFF.md`.
