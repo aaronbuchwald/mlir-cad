@@ -80,15 +80,35 @@ smoke_kernels.py                catches kernel API drift with exact expected num
 tests/run_tests.py              29 checks, pure Python, run anywhere
 ```
 
+## Courses
+
+`courses/` contains three interactive one-day onboarding courses:
+3D modeling from first principles, compilers from first principles
+(LLVM / MLIR / Relax), and the blend — with labs that run against this
+repo's demo. They are self-contained HTML — no server, network, or build
+step. Open them straight from disk:
+
+```bash
+open courses/01-3d-modeling.html          # macOS (or just double-click)
+open courses/02-compilers.html
+open courses/03-geometry-compilers.html
+```
+
+(`xdg-open` on Linux, `start` on Windows.)
+
+**Progress is private to you.** Quiz feedback and "mark module complete"
+state live in your browser's localStorage — client-side, per browser
+profile, per machine. Nothing is ever written back into the HTML files, so
+the committed files stay pristine and anyone else cloning this repo starts
+at 0/N. The only sharing case is two people using the *same* browser
+profile on the *same* computer; for that, each course header has a
+**reset** link that clears its progress.
+
 ## More in this repo
 
 `CLAUDE.md` is the full index. `docs/HANDOFF.md` carries session state and
 next steps; `docs/aec-geometry-ir-analysis.md` is the analysis this demo
 implements; `docs/research/` holds the sourced research notes behind it.
-`courses/` contains three interactive one-day onboarding courses (open the
-HTML files in a browser): 3D modeling from first principles, compilers from
-first principles (LLVM/MLIR/Relax), and the blend — with labs that run
-against this repo's demo.
 
 ## Honest limitations (by design)
 

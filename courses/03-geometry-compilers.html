@@ -59,12 +59,13 @@ label.done { display:flex; gap:9px; align-items:center; margin-top:18px; padding
        background:#faf5ff; }
 .lab .lt { font-weight:700; color:var(--accent); }
 .mut { color:var(--mut); }
+a.reset { color:var(--mut); font-size:.85em; margin-left:12px; }
 </style>
 </head>
 <body>
 <header class="top">
   <div class="topline"><b>Course 3 / 3</b><span>Geometry × Compilers</span>
-    <span class="mut" id="ptext" style="margin-left:auto">0 / 7 modules</span></div>
+    <span class="mut" id="ptext" style="margin-left:auto">0 / 7 modules</span><a class="reset" href="#" onclick="resetP(event)" title="Clear saved progress in this browser">reset</a></div>
   <div class="bar"><i id="pbar"></i></div>
 </header>
 <main>
@@ -453,6 +454,7 @@ function q(btn, ok){
   fb.className="fb"+(ok?" ok":"");
   fb.textContent= ok ? (quiz.dataset.yes||"Correct.") : (quiz.dataset.no||"Not quite — try again.");
 }
+function resetP(e){ e.preventDefault(); DONE=new Set(); store(); render(); }
 render();
 </script>
 </body>
