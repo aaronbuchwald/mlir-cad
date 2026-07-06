@@ -121,16 +121,21 @@ python tests/run_tests.py               # pure-Python, runs anywhere
 Python 3.10–3.12 (cadquery wheel range). FreeCAD/OpenSCAD optional, for
 viewing `out/model.step` / `out/model.scad`.
 
-## Verification state (as of 2026-07-04 handoff)
+## Verification state (as of 2026-07-06, second build pass)
 
-- 29/29 pure-Python checks pass (IR round-trip, sampler volumes vs closed
-  form, match_cast/fallback/divergence, scad emit→lift fixed point).
-- **Full demo verified end-to-end on macOS with real kernels** — OCCT
-  volumes exact to closed form (colonnade = 3·π·r²·h to the decimal);
-  reference outputs committed in `out/` (regenerable via `python demo.py`).
-- On new machines `smoke_kernels.py` (run by setup.sh) pins exact expected
-  volumes to catch cadquery/manifold3d API drift; see `docs/HANDOFF.md`
-  §Verification for the drift-sensitive spots.
+- **50/50 pure-Python checks pass** (`tests/run_tests.py`): IR, artifact/
+  match_cast, dialect v2 (extrude/rotate_z/roles), validation v2, emitter
+  structure checks, fuzzer determinism, scad emit→lift fixed point.
+  Sampler conformance CONFORMANT (manifest committed).
+- Demo verified end-to-end on macOS with real kernels (2026-07-04): OCCT
+  volumes exact to closed form; reference outputs in `out/`.
+- **Pending human run (HC-0)** — see `docs/VERIFICATION.md`: kernel
+  conformance manifests (occt/manifold/manifold12), 300-seed differential
+  fuzz, and the FIRST execution of `geomir/ifc_export.py` (ifcopenshell
+  never ran in the build sandbox — most drift-prone file) and the FreeCAD
+  macro. `smoke_kernels.py` pins exact volumes to localize any API drift.
+- Full state, arc, and resume prompt: `docs/HANDOFF.md`. Plan + human
+  checkpoints: `docs/ROADMAP.md`.
 
 ## Conventions & invariants
 
@@ -147,7 +152,14 @@ viewing `out/model.step` / `out/model.scad`.
 
 ## For future assistant sessions
 
+**Start with `docs/HANDOFF.md`** — full arc, verification boundaries, where
+to resume, and a paste-ready resume prompt. The plan with human checkpoints
+is `docs/ROADMAP.md`; the pending human checklist is `docs/VERIFICATION.md`;
+onboarding a new backend goes through the `add-geomir-target` skill
+(`.claude/skills/`), with the conformance runner as the arbiter.
+
 Research notes carry per-claim source URLs verified July 2026, with
 explicitly flagged uncertainties — re-verify time-sensitive claims (IFC5
-status, AOUSD, vendor APIs) before relying on them. Next-step menu and a
-paste-ready resume prompt live in `docs/HANDOFF.md`.
+status, AOUSD, vendor APIs) before relying on them. Build-sandbox quirks
+(no PyPI; `.claude/` write-protected for file tools; git lock deletes) are
+listed in HANDOFF §Verification state.
