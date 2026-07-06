@@ -18,6 +18,8 @@ BACKENDS: dict[str, tuple[str, str, dict, str]] = {
                  {"circular_segments": 64}, "in-process (manifold3d)"),
     "manifold12": ("geomir.backends.manifold_backend", "ManifoldBackend",
                    {"circular_segments": 12}, "in-process (manifold3d, coarse faceting)"),
+    "sampler_coarse": ("geomir.backends.sampler", "SamplerBackend",
+                       {"budget": 300_000}, "in-process (pure numpy, low budget)"),
     # Future targets (see docs/ROADMAP.md and .claude/skills/add-geomir-target):
     # "ifc":     via IfcOpenShell           [Phase 1, no license]
     # "onshape": REST + FeatureScript       [Phase 2, HC-3: account + API keys]
@@ -32,6 +34,7 @@ TOLERANCES: dict[str, dict[str, float]] = {
     "occt": {"exact": 1e-7, "curved": 1e-7},          # analytic B-rep
     "manifold": {"exact": 1e-9, "curved": 0.005},     # polyhedra exact; 64-seg -0.16%
     "manifold12": {"exact": 1e-9, "curved": 0.05},    # 12-seg -4.5%
+    "sampler_coarse": {"exact": 0.05, "curved": 0.05},
 }
 DEFAULT_TOLERANCE = {"exact": 0.005, "curved": 0.01}
 BBOX_TOL = 1.0  # mm, absolute per coordinate

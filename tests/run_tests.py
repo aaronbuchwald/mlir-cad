@@ -163,6 +163,21 @@ lift_i, warn_i, _ = lift_scad(scad_i)
 close(S.volume(evaluate_element(lift_i, S, "e")), 500_000, 0.02,
       "intersect survives scad round trip")
 
+print("== random recipe generator (differential fuzzer seed) ==")
+from conformance.generate import gen_recipe  # noqa: E402
+
+texts = set()
+for s in range(12):
+    t, k = gen_recipe(s)
+    parse(t)                      # parses + verifies
+    texts.add(t)
+check(len(texts) == 12, "12 seeds -> 12 distinct well-formed recipes")
+t1, k1 = gen_recipe(7)
+t2, k2 = gen_recipe(7)
+check(t1 == t2 and k1 == k2, "generation is deterministic per seed")
+gv = S.volume(evaluate_element(parse(t1), S, "e"))
+check(math.isfinite(gv) and gv >= 0, f"generated recipe evaluates (v={gv:,.0f})")
+
 print("== OpenSCAD emit / lift round trip ==")
 scad1 = emit_scad(m, fallback_stl={"pedestal": "pedestal_baked.stl"})
 check('import("pedestal_baked.stl")' in scad1,
