@@ -42,9 +42,10 @@ docs/
 courses/                           interactive one-day onboarding courses
                                    (self-contained HTML, open in a browser;
                                    progress + quizzes, saved via localStorage)
-  01-3d-modeling.html              3D modeling from first principles: the four
-                                   representation families, parametric layer,
-                                   kernels/tolerances, 60-year history
+  01-3d-modeling.html              3D modeling from first principles: the
+                                   representation families (incl. NURBS),
+                                   parametric layer, kernels/tolerances,
+                                   60-year history
   02-compilers.html                compilers from first principles: pipeline,
                                    SSA, e-graphs, LLVM, MLIR, Relax, dark arts
   03-geometry-compilers.html       the blend: Rosetta table, three workflows
@@ -98,8 +99,9 @@ conformance/                       the target-onboarding harness
 demo.py                            six-act walkthrough (see README)
 smoke_kernels.py                   kernel API drift canary — run first on a
                                    new machine; exact expected volumes
-tests/run_tests.py                 29 pure-Python checks, no kernels needed
-setup.sh / requirements.txt        venv + cadquery, manifold3d, trimesh, numpy
+tests/run_tests.py                 51 pure-Python checks, no kernels needed
+setup.sh / requirements.txt        venv + cadquery, manifold3d, trimesh,
+                                   numpy, ifcopenshell
 out/                               committed reference outputs from the
                                    verified macOS run (2026-07-04):
                                    model.step (FreeCAD), model.scad
@@ -123,7 +125,7 @@ viewing `out/model.step` / `out/model.scad`.
 
 ## Verification state (as of 2026-07-06, second build pass)
 
-- **50/50 pure-Python checks pass** (`tests/run_tests.py`): IR, artifact/
+- **51/51 pure-Python checks pass** (`tests/run_tests.py`): IR, artifact/
   match_cast, dialect v2 (extrude/rotate_z/roles), validation v2, emitter
   structure checks, fuzzer determinism, scad emit→lift fixed point.
   Sampler conformance CONFORMANT (manifest committed).

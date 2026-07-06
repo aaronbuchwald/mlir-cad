@@ -73,25 +73,31 @@ geomir/backends/sampler.py      pure-numpy point-membership kernel (test oracle;
                                 also a third math: implicit membership, F-rep-lite)
 geomir/artifact.py              exchange artifact + match_cast + per-element fallback
 geomir/scad.py                  lowering to / lifting from OpenSCAD source
+geomir/validate.py              deep checks: mesh area + sampled Hausdorff
+geomir/freecad_script.py        FreeCAD macro emitter (source-form target)
+geomir/ifc_export.py            IFC4 CSG exporter (roles -> entity classes)
 recipes/studio_wall.ir          the demo model (wall + window + door, colonnade,
                                 filleted pedestal)
 demo.py                         the six-act walkthrough
 smoke_kernels.py                catches kernel API drift with exact expected numbers
-tests/run_tests.py              29 checks, pure Python, run anywhere
+tests/run_tests.py              51 checks, pure Python, run anywhere
 ```
+
+(Full index incl. conformance harness, courses, and skills: `CLAUDE.md`.)
 
 ## Courses
 
-`courses/` contains three interactive one-day onboarding courses:
-3D modeling from first principles, compilers from first principles
-(LLVM / MLIR / Relax), and the blend — with labs that run against this
-repo's demo. They are self-contained HTML — no server, network, or build
-step. Open them straight from disk:
+`courses/` contains four interactive onboarding courses: 3D modeling from
+first principles, compilers from first principles (LLVM / MLIR / Relax),
+the blend — with labs that run against this repo's demo — and a live
+two-kernel walkthrough. They are self-contained HTML — no server, network,
+or build step. Open them straight from disk:
 
 ```bash
 open courses/01-3d-modeling.html          # macOS (or just double-click)
 open courses/02-compilers.html
 open courses/03-geometry-compilers.html
+open courses/04-two-kernels-live.html
 ```
 
 (`xdg-open` on Linux, `start` on Windows.)
@@ -138,10 +144,14 @@ implements; `docs/research/` holds the sourced research notes behind it.
 
 ## Honest limitations (by design)
 
-Toy dialect (boxes, cylinders, booleans, one pattern op, one B-rep-only op) —
-enough to make every architectural point, nothing more. Validation compares
-volume + bbox, not full shape (Hausdorff distance would be the real thing).
-Lifting is source-level from our emitted OpenSCAD subset; no mesh→recipe
-synthesis. No constraint solving, no persistent-naming stress test (single
-producer), no behavioral semantics. Each of these is a known, labeled edge
-of the map — see the report for where the research frontier sits on each.
+Small dialect (primitives, extruded polygon profiles, booleans, translate/
+rotate_z, one pattern op, one B-rep-only op) — enough to make every
+architectural point; revolve/sweep/loft and richer profiles are roadmapped.
+Validation is volume + bbox by default, with an optional sampled-Hausdorff
+deep check (`import_artifact(deep=True)`) — sampled, so it has a resolution
+floor. Lifting is source-level from our emitted OpenSCAD subset; no
+mesh→recipe synthesis. No constraint solving, no persistent-naming stress
+test (single producer), no behavioral semantics. The IFC exporter is
+unverified until its first ifcopenshell run (`docs/VERIFICATION.md` §2).
+Each of these is a known, labeled edge of the map — see the report and
+`docs/ROADMAP.md` for where the frontier sits on each.

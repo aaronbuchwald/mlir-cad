@@ -14,8 +14,8 @@ lightweight (minutes, async).
 
 Goal: make "add a target" a checklist executed by an agent, verified by machinery.
 
-- [F] `geom.intersect` op across dialect/backends/scad/tests (proves the add-an-op path;
-  `rotate_z` deliberately left as course Lab 4).
+- [F] `geom.intersect` op across dialect/backends/scad/tests (proves the add-an-op
+  path; `geom.cone` left as course Lab 4 — rotate_z was implemented in Phase 1).
 - [F] **Conformance harness** (`conformance/`): graded corpus (L0 primitives → L4
   pathological tangencies) with closed-form invariants; per-op smoke stage; match_cast
   conformance stage; report card (JSON + text); **auto-generated capability manifests**

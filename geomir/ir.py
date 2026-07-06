@@ -301,6 +301,8 @@ def verify(m: Module) -> None:
                 raise IRError(f"{op.name}: expected operand kind {want!r}, got {got!r}")
         if op.name == "recipe.export" and len(op.operands) > 3:
             raise IRError("recipe.export takes at most (solid, name, role)")
+        if op.name == "profile.polygon" and len(op.operands[0]) < 3:
+            raise IRError("profile.polygon needs at least 3 points")
         if spec["result"] is not None:
             if op.result is None:
                 raise IRError(f"{op.name}: must produce a result")

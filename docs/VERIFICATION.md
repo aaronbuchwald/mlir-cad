@@ -1,7 +1,7 @@
 # VERIFICATION — human checklist
 
 Everything below runs on your Mac in **~20–30 minutes**. Fable verified all
-pure-Python paths in its sandbox (50/50 checks); anything touching cadquery,
+pure-Python paths in its sandbox (51/51 checks); anything touching cadquery,
 manifold3d, or ifcopenshell executes for the first time on your machine —
 that's what this checklist closes. Check items off in order.
 
@@ -16,9 +16,9 @@ python demo.py
 
 - [ ] Act 1 prints colonnade volume **593,761,011.5** (exactly 3·π·150²·2800 — the
   proof OCCT is analytic).
-- [ ] Act 2 table: wall LIVE (+0.000%), colonnade LIVE (−0.161%), pedestal
-  FALLBACK (op unsupported).
-- [ ] Act 3 (12 segments): colonnade DIVERGED at −4.5%, wall still LIVE.
+- [ ] Act 2 table: wall LIVE (+0.000%), colonnade LIVE (+0.161% — the table
+  shows |Δ|), pedestal FALLBACK (op unsupported).
+- [ ] Act 3 (12 segments): colonnade DIVERGED at ~4.5%, wall still LIVE.
 - [ ] Act 4: `win_w` edit regenerates wall+colonnade on Manifold; pedestal FROZEN.
 - [ ] Act 5: `out/model.scad` emitted; 2/3 elements lifted; volumes match: PASS.
 - [ ] **Interactive walkthrough:** `open courses/04-two-kernels-live.html` —
@@ -33,8 +33,8 @@ python -m conformance.run --backend occt --backend manifold --backend manifold12
 
 - [ ] **occt**: all ops supported incl. fillet; every corpus row PASS
   (exact rows at ~0.000%); ends `CONFORMANT`.
-- [ ] **manifold**: fillet UNSUPPORTED (expected); L0_cylinder ≈ −0.161%;
-  L2_pattern ≈ −0.161%; ends `CONFORMANT`.
+- [ ] **manifold**: fillet UNSUPPORTED (expected); L0_cylinder ≈ +0.161%;
+  L2_pattern ≈ +0.161% (|Δ| — the underlying deficit is negative); `CONFORMANT`.
 - [ ] **manifold12**: curved rows ≈ −4.5% but PASS under its *own* 5% contract
   (see edge case 5k below — this is intentional and important); `CONFORMANT`.
 - [ ] Commit the now-real manifests:
@@ -57,7 +57,7 @@ python -m geomir.ifc_export out/studio_wall.artifact.json out/model.ifc
 ## 3 · Verify it's tested appropriately (5 min)
 
 ```bash
-python tests/run_tests.py     # 50 checks, grouped by subsystem
+python tests/run_tests.py     # 51 checks, grouped by subsystem
 ```
 
 - [ ] Groups present: IR core / sampler-vs-closed-form / artifact+match_cast
@@ -98,6 +98,11 @@ backends yet (Phases 2–3, license-gated).
 - [ ] Courses 01–03 open and track progress; course 04 is the live demo.
 - [ ] `.claude/skills/add-geomir-target/` shows up as a project skill when
   this repo is opened in Claude Code.
+- [ ] External links: load-bearing links were spot-checked live on
+  2026-07-06 (Ondsel toponaming, Parasolid docs mirror, Speckle data-schema);
+  the full per-claim link set in `docs/research/` was verified at research
+  time (2026-07-04) with uncertainties flagged inline. Re-verify
+  time-sensitive claims (IFC5, AOUSD, vendor APIs) before citing onward.
 
 ## 5 · Ugly edge cases — guided tour
 

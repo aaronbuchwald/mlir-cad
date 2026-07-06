@@ -29,7 +29,7 @@ work around a licensing checkpoint.
 ## Phase 1 — Scaffold
 
 1. Create `geomir/backends/<name>_backend.py` implementing the interface
-   (see `geomir/eval.py` docstring): `box, cylinder, translate, union,
+   (see `geomir/eval.py` docstring): `box, cylinder, extrude, translate, rotate_z, union,
    difference, intersect, fillet, volume, bbox, mesh` + `name` attribute.
    - Unsupported ops must `raise UnsupportedOp(self.name, "geom.<op>")` —
      never approximate silently. The per-element fallback machinery depends
@@ -44,8 +44,8 @@ Gate: `python -c "from conformance.registry import load_backend; load_backend('<
 
 ## Phase 2 — Op-by-op with smoke gates
 
-Implement in this order (dependency-light first): `box -> translate -> union ->
-difference -> intersect -> cylinder -> repeat_x -> fillet`.
+Implement in this order (dependency-light first): `box -> translate -> rotate_z -> union ->
+difference -> intersect -> cylinder -> extrude -> repeat_x -> fillet`.
 After EACH op: `python -m conformance.run --backend <name>` and confirm that
 op flips to supported/PASS in the card before starting the next. Volume comes
 from the target's own math where possible (or mesh + divergence theorem, see

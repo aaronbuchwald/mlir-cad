@@ -64,9 +64,7 @@ def _placement(f, xf: _XF):
 class _Lowerer:
     def __init__(self, f, module: Module, env_params: dict):
         self.f, self.m = f, module
-        # resolve scalars with the artifact's parameter bindings
-        from .eval import evaluate_element  # noqa: F401 (env resolution below)
-        self.params = env_params
+        self.params = env_params  # artifact's parameter bindings
 
     def scalar(self, o) -> float:
         if isinstance(o, (int, float)):

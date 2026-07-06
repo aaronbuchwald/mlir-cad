@@ -316,11 +316,12 @@ incentive. Until then, expect this architecture to win in wedges, not by standar
 relation for window centering; the op that only a B-rep kernel can execute. Then open
 <code>geomir/ir.py</code> and find the verifier doing def-before-use and operand-kind
 checking — semantic analysis in ~60 lines.</p>
-<details><summary>Check yourself</summary><p>Dialects: <code>recipe.param/export</code>,
-<code>expr.add/sub/mul/div</code>, <code>geom.box/cylinder/translate/union/difference/
-repeat_x/fillet</code>. The symbolic relation: <code>%free = expr.sub %wall_len, %win_w;
-%win_x = expr.div %free, 2.0</code>. The B-rep-only op: <code>geom.fillet</code> —
-mesh kernels have no edges to fillet.</p></details></div>
+<details><summary>Check yourself</summary><p>Dialects: <code>recipe.param/export</code>
+(exports may carry a role string), <code>expr.add/sub/mul/div</code>,
+<code>profile.polygon</code>, <code>geom.box/cylinder/extrude/translate/rotate_z/union/
+difference/intersect/repeat_x/fillet</code>. The symbolic relation:
+<code>%free = expr.sub %wall_len, %win_w; %win_x = expr.div %free, 2.0</code>.
+The B-rep-only op: <code>geom.fillet</code> — mesh kernels have no edges to fillet.</p></details></div>
 
 <div class="lab"><span class="lt">Lab 2 — run the six acts, name the compiler concept (30 min)</span>
 <p>Run <code>python demo.py</code>. For each act, say aloud which Course 2 concept it

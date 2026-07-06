@@ -67,7 +67,7 @@ checkpoints), `docs/VERIFICATION.md` (the human checklist currently pending),
 
 ## Verification state — READ BEFORE TRUSTING ANYTHING
 
-- Pure Python: **50/50 checks pass** (`tests/run_tests.py`) — IR, artifact/
+- Pure Python: **51/51 checks pass** (`tests/run_tests.py`) — IR, artifact/
   match_cast (LIVE/FALLBACK/DIVERGED/frozen-regenerate), dialect v2,
   validation v2, emitter structure checks, fuzzer determinism, scad
   fixed point. Sampler conformance: **CONFORMANT** (manifest committed).

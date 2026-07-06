@@ -81,6 +81,9 @@ for bad, why in [
      "undefined value"),
     ("recipe.module @x {\n  %a = recipe.param \"p\", 1.0\n  recipe.export %a, \"e\"\n}",
      "scalar exported as solid"),
+    ("recipe.module @x {\n  %p = profile.polygon [[0.0, 0.0], [10.0, 0.0]]\n"
+     "  %a = geom.extrude %p, 5.0\n  recipe.export %a, \"e\"\n}",
+     "degenerate 2-point profile"),
 ]:
     try:
         parse(bad)
