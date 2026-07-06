@@ -40,9 +40,19 @@ class ManifoldBackend:
         # axis +z, centered in xy — matches geom.cylinder semantics
         return self._M.cylinder(h, r, r, self.circular_segments)
 
+    def extrude(self, pts, h):
+        from manifold3d import CrossSection
+        cs = CrossSection([list(map(list, pts))])
+        if hasattr(cs, "extrude"):
+            return cs.extrude(h)
+        return self._M.extrude(cs, h)  # older API shape
+
     # -- combinators ----------------------------------------------------------
     def translate(self, s, x, y, z):
         return s.translate([x, y, z])
+
+    def rotate_z(self, s, degrees):
+        return s.rotate([0.0, 0.0, float(degrees)])
 
     def union(self, a, b):
         return a + b

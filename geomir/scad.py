@@ -82,6 +82,16 @@ class _Emitter:
         if n == "geom.cylinder":
             r, h = op.operands
             return [f"{ind}cylinder(h = {self.sexpr(h)}, r = {self.sexpr(r)});"]
+        if n == "geom.extrude":
+            prof = self.m.op_producing(op.operands[0])
+            pts = ", ".join(f"[{self.sexpr(p[0])}, {self.sexpr(p[1])}]"
+                            for p in prof.operands[0])
+            h = self.sexpr(op.operands[1])
+            return [f"{ind}linear_extrude(height = {h}) "
+                    f"polygon(points = [{pts}]);"]
+        if n == "geom.rotate_z":
+            head = f"{ind}rotate([0, 0, {self.sexpr(op.operands[1])}])"
+            return [head] + self.stmt(op.operands[0], ind + "  ")
         if n == "geom.translate":
             x, y, z = op.operands[1]
             head = (f"{ind}translate([{self.sexpr(x)}, {self.sexpr(y)}, "
@@ -264,6 +274,32 @@ class _Lifter:
             vec = self.vec3()
             self.eat(")")
             return ("translate", vec, self.stmt())
+        if v == "rotate":
+            self.eat(); self.eat("(")
+            vec = self.vec3()
+            self.eat(")")
+            if vec[0] != ("num", 0.0) or vec[1] != ("num", 0.0):
+                raise IRError("scad lift: only z-axis rotation supported")
+            return ("rotate_z", vec[2], self.stmt())
+        if v == "linear_extrude":
+            self.eat(); self.eat("(")
+            self.eat("height"); self.eat("=")
+            h = self.expr()
+            self.eat(")")
+            self.eat("polygon"); self.eat("(")
+            self.eat("points"); self.eat("="); self.eat("[")
+            pts = []
+            while True:
+                self.eat("[")
+                px = self.expr(); self.eat(","); py = self.expr()
+                self.eat("]")
+                pts.append((px, py))
+                if self.peek()[1] == ",":
+                    self.eat()
+                else:
+                    break
+            self.eat("]"); self.eat(")"); self.eat(";")
+            return ("extrude", pts, h)
         if v in ("union", "difference", "intersection"):
             self.eat(); self.eat("("); self.eat(")")
             children = self.block()
@@ -355,6 +391,21 @@ class _Lifter:
             vec = [self.build_scalar(e) for e in ast[1]]
             r = self.fresh()
             self._ops.append(Op(r, "geom.translate", [child, vec]))
+            return f"%{r}"
+        if kind == "rotate_z":
+            child = self.build_solid(ast[2])
+            r = self.fresh()
+            self._ops.append(Op(r, "geom.rotate_z",
+                                [child, self.build_scalar(ast[1])]))
+            return f"%{r}"
+        if kind == "extrude":
+            pts = [[self.build_scalar(px), self.build_scalar(py)]
+                   for px, py in ast[1]]
+            pr = self.fresh()
+            self._ops.append(Op(pr, "profile.polygon", [pts]))
+            r = self.fresh()
+            self._ops.append(Op(r, "geom.extrude",
+                                [f"%{pr}", self.build_scalar(ast[2])]))
             return f"%{r}"
         if kind in ("union", "intersection"):
             children = [self.build_solid(c) for c in ast[1]]

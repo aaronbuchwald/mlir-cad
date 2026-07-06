@@ -54,6 +54,28 @@ class SamplerBackend:
                     (p[:, 2] >= 0) & (p[:, 2] <= h))
         return _Solid(fn, (-r, -r, 0.0, r, r, h))
 
+    def extrude(self, pts, h):
+        poly = np.asarray(pts, dtype=np.float64)  # (M, 2), closed CCW
+
+        def fn(p):
+            # vectorized crossing-number point-in-polygon on x/y, z slab
+            x, y = p[:, 0], p[:, 1]
+            inside = np.zeros(len(p), dtype=bool)
+            M = len(poly)
+            for i in range(M):
+                x1, y1 = poly[i]
+                x2, y2 = poly[(i + 1) % M]
+                cond = ((y1 > y) != (y2 > y))
+                denom = (y2 - y1)
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    xin = x1 + (y - y1) * (x2 - x1) / np.where(denom == 0, 1e-30, denom)
+                inside ^= cond & (x < xin)
+            return inside & (p[:, 2] >= 0) & (p[:, 2] <= h)
+
+        mn, mx = poly.min(axis=0), poly.max(axis=0)
+        return _Solid(fn, (float(mn[0]), float(mn[1]), 0.0,
+                           float(mx[0]), float(mx[1]), h))
+
     # -- combinators ----------------------------------------------------------
     def translate(self, s, x, y, z):
         t = np.array([x, y, z])
@@ -63,6 +85,24 @@ class SamplerBackend:
         b = s.box
         return _Solid(fn, (b[0] + x, b[1] + y, b[2] + z,
                            b[3] + x, b[4] + y, b[5] + z))
+
+    def rotate_z(self, s, degrees):
+        th = np.radians(degrees)
+        c, si = np.cos(th), np.sin(th)
+
+        def fn(p):
+            # inverse-rotate query points into the solid's frame
+            q = p.copy()
+            q[:, 0] = c * p[:, 0] + si * p[:, 1]
+            q[:, 1] = -si * p[:, 0] + c * p[:, 1]
+            return s.fn(q)
+
+        b = s.box
+        corners = np.array([[x, y] for x in (b[0], b[3]) for y in (b[1], b[4])])
+        rx = c * corners[:, 0] - si * corners[:, 1]
+        ry = si * corners[:, 0] + c * corners[:, 1]
+        return _Solid(fn, (float(rx.min()), float(ry.min()), b[2],
+                           float(rx.max()), float(ry.max()), b[5]))
 
     def union(self, a, b):
         def fn(p):

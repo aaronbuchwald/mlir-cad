@@ -33,9 +33,16 @@ class OCCTBackend:
         # base-center at origin, axis +z (CadQuery: height first, then radius)
         return cq.Workplane("XY").cylinder(h, r, centered=(True, True, False))
 
+    def extrude(self, pts, h):
+        pts = [tuple(p) for p in pts]
+        return (cq.Workplane("XY").polyline(pts).close().extrude(h))
+
     # -- combinators ----------------------------------------------------------
     def translate(self, s, x, y, z):
         return s.translate(cq.Vector(x, y, z))
+
+    def rotate_z(self, s, degrees):
+        return s.rotate((0, 0, 0), (0, 0, 1), degrees)
 
     def union(self, a, b):
         return a.union(b)

@@ -7,9 +7,12 @@ parameter binding, and dispatches geom.* ops to a kernel backend.
 A backend is any object with:
     box(w, d, h) -> handle
     cylinder(r, h) -> handle
+    extrude(points, h) -> handle           (points: list[(x, y)], closed CCW)
     translate(handle, x, y, z) -> handle
+    rotate_z(handle, degrees) -> handle
     union(a, b) -> handle
     difference(a, b) -> handle
+    intersect(a, b) -> handle
     fillet(handle, r) -> handle            (may raise UnsupportedOp)
     volume(handle) -> float
     bbox(handle) -> (xmin, ymin, zmin, xmax, ymax, zmax)
@@ -105,6 +108,17 @@ def _eval_op(op: Op, env: dict, bindings: dict, backend):
         return _scalar(env, op.operands[0]) * _scalar(env, op.operands[1])
     if n == "expr.div":
         return _scalar(env, op.operands[0]) / _scalar(env, op.operands[1])
+    if n == "profile.polygon":
+        # profiles are plain data (list of (x, y)), resolved here — they never
+        # become kernel handles; backends receive them via geom.extrude
+        return [(_scalar(env, c[0]), _scalar(env, c[1])) for c in op.operands[0]]
+    if n == "geom.extrude":
+        pts = env[op.operands[0].lstrip("%")]
+        h = _scalar(env, op.operands[1])
+        return backend.extrude(pts, h)
+    if n == "geom.rotate_z":
+        s = _solid(env, op.operands[0])
+        return backend.rotate_z(s, _scalar(env, op.operands[1]))
     if n == "geom.box":
         w, d, h = (_scalar(env, o) for o in op.operands)
         return backend.box(w, d, h)

@@ -163,6 +163,34 @@ lift_i, warn_i, _ = lift_scad(scad_i)
 close(S.volume(evaluate_element(lift_i, S, "e")), 500_000, 0.02,
       "intersect survives scad round trip")
 
+print("== dialect v2: extrude, rotate_z, roles ==")
+V2 = """recipe.module @v2 {
+  %h = recipe.param "h", 100.0
+  %pr = profile.polygon [[0.0, 0.0], [200.0, 0.0], [200.0, 100.0], [100.0, 100.0], [100.0, 200.0], [0.0, 200.0]]
+  %sol = geom.extrude %pr, %h
+  %rot = geom.rotate_z %sol, 37.0
+  recipe.export %sol, "L", "IfcSlab"
+  recipe.export %rot, "Lrot"
+}"""
+mv2 = parse(V2)
+# L-shape area = 200*100 + 100*100 = 30,000 ; volume = area * h
+lv = S.volume(evaluate_element(mv2, S, "L"))
+close(lv, 30_000 * 100, 0.02, "extruded L-profile volume (area x height)")
+rv = S.volume(evaluate_element(mv2, S, "Lrot"))
+close(rv, 30_000 * 100, 0.02, "rotation preserves volume")
+check(mv2.roles() == {"L": "IfcSlab", "Lrot": None},
+      "element roles parsed (classification metadata)")
+p1v2 = print_module(mv2)
+check(print_module(parse(p1v2)) == p1v2, "v2 ops print/parse fixed point")
+scad_v2 = emit_scad(mv2)
+check("linear_extrude" in scad_v2 and "rotate([0, 0, 37])" in scad_v2,
+      "extrude + rotate_z lower to OpenSCAD")
+lift_v2, w_v2, _ = lift_scad(scad_v2)
+close(S.volume(evaluate_element(lift_v2, S, "L")), 30_000 * 100, 0.02,
+      "extrude survives scad round trip")
+close(S.volume(evaluate_element(lift_v2, S, "Lrot")), 30_000 * 100, 0.02,
+      "rotate_z survives scad round trip")
+
 print("== random recipe generator (differential fuzzer seed) ==")
 from conformance.generate import gen_recipe  # noqa: E402
 

@@ -62,8 +62,15 @@ class _Gen:
         return f"%{r}"
 
     def leaf(self) -> str:
-        if self.rng.random() < 0.6:
+        roll = self.rng.random()
+        if roll < 0.5:
             return self.emit("geom.box", [self.dim(), self.dim(), self.dim()])
+        if roll < 0.75:
+            # right-triangle profile extrusion (prismatic -> stays exact-class)
+            a, b = self.lit(50, 400), self.lit(50, 400)
+            p = self.emit("profile.polygon",
+                          [[[0.0, 0.0], [a, 0.0], [0.0, b]]])
+            return self.emit("geom.extrude", [p, self.lit(50, 400)])
         self.curved = True
         return self.emit("geom.cylinder",
                          [self.lit(20, 200), self.lit(50, 500)])
@@ -72,11 +79,14 @@ class _Gen:
         if depth <= 0:
             return self.leaf()
         roll = self.rng.random()
-        if roll < 0.25:
+        if roll < 0.20:
             return self.emit("geom.translate",
                              [self.solid(depth - 1),
                               [self.lit(-200, 200), self.lit(-200, 200),
                                self.lit(-200, 200)]])
+        if roll < 0.32:
+            return self.emit("geom.rotate_z",
+                             [self.solid(depth - 1), self.lit(-180, 180)])
         if roll < 0.45:
             return self.emit("geom.union",
                              [self.solid(depth - 1), self.solid(depth - 1)])

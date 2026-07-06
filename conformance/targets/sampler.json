@@ -1,6 +1,6 @@
 {
  "target": "sampler",
- "generated": "2026-07-06T22:31:02.273951+00:00",
+ "generated": "2026-07-06T22:42:23.578951+00:00",
  "geomir_version": "0.1.0",
  "backend": {
   "module": "geomir.backends.sampler",
@@ -40,6 +40,14 @@
   "geom.fillet": {
    "supported": false,
    "max_rel_diff": null
+  },
+  "geom.rotate_z": {
+   "supported": true,
+   "max_rel_diff": 0.004150390625
+  },
+  "geom.extrude": {
+   "supported": true,
+   "max_rel_diff": 0.004206057249845161
   }
  },
  "tolerance_contract": {
@@ -47,7 +55,7 @@
   "curved": 0.02
  },
  "corpus_summary": {
-  "PASS": 9,
+  "PASS": 10,
   "FAIL": 0,
   "UNSUPPORTED": 1,
   "INFO": 0,

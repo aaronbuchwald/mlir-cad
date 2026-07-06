@@ -50,6 +50,7 @@ def bake(module: Module, backend, params: dict[str, float] | None = None,
         elements[name] = {
             "volume": backend.volume(handle),
             "bbox": list(backend.bbox(handle)),
+            "role": module.roles().get(name),
             "mesh": ({"vertices": mesh[0], "faces": mesh[1]}
                      if mesh is not None else None),
         }

@@ -80,6 +80,15 @@ _SMOKE = {
         _wrap("  %a = geom.box 200.0, 200.0, 200.0\n"
               "  %e = geom.fillet %a, 20.0"),
         {"volume_range": [7_200_000.0, 8_000_000.0], "class": "exact"}),
+    "geom.rotate_z": (
+        _wrap("  %a = geom.box 100.0, 50.0, 30.0\n"
+              "  %e = geom.rotate_z %a, 45.0"),
+        {"volume": 150_000.0, "class": "exact"}),
+    "geom.extrude": (
+        _wrap("  %p = profile.polygon [[0.0, 0.0], [200.0, 0.0], "
+              "[200.0, 100.0], [100.0, 100.0], [100.0, 200.0], [0.0, 200.0]]\n"
+              "  %e = geom.extrude %p, 100.0"),
+        {"volume": 3_000_000.0, "class": "exact"}),
 }
 
 

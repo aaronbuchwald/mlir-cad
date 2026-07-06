@@ -38,15 +38,15 @@ recipe.module @studio_wall {
   %door_box = geom.box %door_w, 500.0, %door_hc
   %door_cut = geom.translate %door_box, [%door_off, -100.0, -1.0]
   %wall     = geom.difference %wall1, %door_cut
-  recipe.export %wall, "wall"
+  recipe.export %wall, "wall", "IfcWall"
 
   %col      = geom.cylinder %col_r, %col_h
   %cols     = geom.repeat_x %col, %col_n, %col_gap
   %colonnade = geom.translate %cols, [1000.0, 1200.0, 0.0]
-  recipe.export %colonnade, "colonnade"
+  recipe.export %colonnade, "colonnade", "IfcColumn"
 
   %ped0     = geom.box 800.0, 800.0, 450.0
   %ped1     = geom.fillet %ped0, %fillet_r
   %pedestal = geom.translate %ped1, [2600.0, 1900.0, 0.0]
-  recipe.export %pedestal, "pedestal"
+  recipe.export %pedestal, "pedestal", "IfcBuildingElementProxy"
 }

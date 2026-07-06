@@ -1,0 +1,7 @@
+recipe.module @L2_extrude_rot {
+  %h = recipe.param "h", 100.0
+  %pr = profile.polygon [[0.0, 0.0], [200.0, 0.0], [200.0, 100.0], [100.0, 100.0], [100.0, 200.0], [0.0, 200.0]]
+  %sol = geom.extrude %pr, %h
+  %e = geom.rotate_z %sol, 90.0
+  recipe.export %e, "e"
+}

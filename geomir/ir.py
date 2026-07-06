@@ -35,20 +35,29 @@ OP_SPECS: dict[str, dict] = {
     # module structure
     "recipe.param":   {"sig": ["str", "s"], "result": "scalar",
                        "doc": "named parameter with default value"},
-    "recipe.export":  {"sig": ["g", "str"], "result": None,
-                       "doc": "export a solid as a named element"},
+    "recipe.export":  {"sig": ["g", "str"], "result": None, "variadic": True,
+                       "doc": "export a solid as a named element; optional "
+                              "third operand = element role (e.g. \"IfcWall\") "
+                              "— classification metadata, never semantics"},
     # symbolic scalar expressions
     "expr.add":       {"sig": ["s", "s"], "result": "scalar"},
     "expr.sub":       {"sig": ["s", "s"], "result": "scalar"},
     "expr.mul":       {"sig": ["s", "s"], "result": "scalar"},
     "expr.div":       {"sig": ["s", "s"], "result": "scalar"},
+    # 2D profiles (data, resolved at evaluation time — not kernel handles)
+    "profile.polygon": {"sig": ["pts"], "result": "profile",
+                        "doc": "closed 2D polygon from [[x, y], ...] (CCW, no holes yet)"},
     # solid constructors (all anchored at origin, +x/+y/+z)
     "geom.box":       {"sig": ["s", "s", "s"], "result": "solid",
                        "doc": "box(w, d, h), corner at origin"},
     "geom.cylinder":  {"sig": ["s", "s"], "result": "solid",
                        "doc": "cylinder(radius, height), base center at origin, +z axis"},
+    "geom.extrude":   {"sig": ["p", "s"], "result": "solid",
+                       "doc": "extrude(profile, height) along +z from z=0"},
     # combinators
     "geom.translate": {"sig": ["g", "v3"], "result": "solid"},
+    "geom.rotate_z":  {"sig": ["g", "s"], "result": "solid",
+                       "doc": "rotate about the +z axis through the origin, degrees CCW"},
     "geom.union":     {"sig": ["g", "g"], "result": "solid", "variadic": True},
     "geom.difference": {"sig": ["g", "g"], "result": "solid"},
     "geom.intersect": {"sig": ["g", "g"], "result": "solid", "variadic": True},
@@ -99,6 +108,15 @@ class Module:
         for op in self.ops:
             if op.name == "recipe.export":
                 out[op.operands[1]] = op.operands[0]
+        return out
+
+    def roles(self) -> dict[str, str | None]:
+        """element name -> role string (classification metadata) or None"""
+        out = {}
+        for op in self.ops:
+            if op.name == "recipe.export":
+                out[op.operands[1]] = (op.operands[2]
+                                       if len(op.operands) > 2 else None)
         return out
 
     def op_producing(self, ref: str) -> Op:
@@ -225,20 +243,27 @@ def print_module(m: Module) -> str:
 # ---------------------------------------------------------------------------
 
 def _operand_kind(m: Module, defined: dict[str, str], o: Operand) -> str:
-    """Return 's' | 'g' | 'v3' | 'str' for an operand."""
+    """Return 's' | 'g' | 'p' | 'v2' | 'v3' | 'pts' | 'str' for an operand."""
     if isinstance(o, str) and o.startswith("%"):
         r = o.lstrip("%")
         if r not in defined:
             raise IRError(f"use of undefined value %{r}")
-        return {"scalar": "s", "solid": "g"}[defined[r]]
+        return {"scalar": "s", "solid": "g", "profile": "p"}[defined[r]]
     if isinstance(o, str):
         return "str"
     if isinstance(o, (int, float)):
         return "s"
     if isinstance(o, (list, tuple)):
-        if len(o) != 3:
-            raise IRError(f"vector operand must have 3 entries, got {len(o)}")
-        return "v3"
+        if o and all(isinstance(c, (list, tuple)) for c in o):
+            for c in o:
+                if len(c) != 2:
+                    raise IRError("point-list entries must be [x, y] pairs")
+            return "pts"
+        if len(o) == 3:
+            return "v3"
+        if len(o) == 2:
+            return "v2"
+        raise IRError(f"vector operand must have 2 or 3 entries, got {len(o)}")
     raise IRError(f"unclassifiable operand {o!r}")
 
 
@@ -259,14 +284,23 @@ def verify(m: Module) -> None:
             eff_sig = sig
         for want, o in zip(eff_sig, op.operands):
             got = _operand_kind(m, defined, o)
-            if want == "v3":
-                if got != "v3":
-                    raise IRError(f"{op.name}: expected vector, got {got}")
+            if want in ("v3", "v2"):
+                if got != want:
+                    raise IRError(f"{op.name}: expected {want} vector, got {got}")
                 for c in o:
                     if _operand_kind(m, defined, c) != "s":
                         raise IRError(f"{op.name}: vector entries must be scalar")
+            elif want == "pts":
+                if got != "pts":
+                    raise IRError(f"{op.name}: expected point list, got {got}")
+                for pt in o:
+                    for c in pt:
+                        if _operand_kind(m, defined, c) != "s":
+                            raise IRError(f"{op.name}: point entries must be scalar")
             elif want != got:
                 raise IRError(f"{op.name}: expected operand kind {want!r}, got {got!r}")
+        if op.name == "recipe.export" and len(op.operands) > 3:
+            raise IRError("recipe.export takes at most (solid, name, role)")
         if spec["result"] is not None:
             if op.result is None:
                 raise IRError(f"{op.name}: must produce a result")
