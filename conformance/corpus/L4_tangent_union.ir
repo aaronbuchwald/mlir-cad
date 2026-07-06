@@ -1,0 +1,7 @@
+recipe.module @L4_tangent_union {
+  %a = geom.box 100.0, 100.0, 100.0
+  %b0 = geom.box 100.0, 100.0, 100.0
+  %b = geom.translate %b0, [100.0, 0.0, 0.0]
+  %e = geom.union %a, %b
+  recipe.export %e, "e"
+}

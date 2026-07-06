@@ -1,0 +1,4 @@
+recipe.module @L0_box {
+  %e = geom.box 100.0, 200.0, 50.0
+  recipe.export %e, "e"
+}

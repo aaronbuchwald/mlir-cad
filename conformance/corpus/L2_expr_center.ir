@@ -1,0 +1,11 @@
+recipe.module @L2_expr_center {
+  %L = recipe.param "L", 4000.0
+  %w = recipe.param "w", 1000.0
+  %a = expr.sub %L, %w
+  %x = expr.div %a, 2.0
+  %wall = geom.box %L, 300.0, 3000.0
+  %win0 = geom.box %w, 500.0, 1200.0
+  %win = geom.translate %win0, [%x, -100.0, 900.0]
+  %e = geom.difference %wall, %win
+  recipe.export %e, "e"
+}

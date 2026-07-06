@@ -1,0 +1,7 @@
+recipe.module @L2_pattern {
+  %n = recipe.param "n", 4.0
+  %gap = recipe.param "gap", 500.0
+  %c = geom.cylinder 100.0, 1000.0
+  %e = geom.repeat_x %c, %n, %gap
+  recipe.export %e, "e"
+}

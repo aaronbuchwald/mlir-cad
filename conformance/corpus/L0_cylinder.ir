@@ -1,0 +1,4 @@
+recipe.module @L0_cylinder {
+  %e = geom.cylinder 50.0, 100.0
+  recipe.export %e, "e"
+}

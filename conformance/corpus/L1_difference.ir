@@ -1,0 +1,7 @@
+recipe.module @L1_difference {
+  %a = geom.box 100.0, 100.0, 100.0
+  %b0 = geom.box 50.0, 120.0, 50.0
+  %b = geom.translate %b0, [25.0, -10.0, 25.0]
+  %e = geom.difference %a, %b
+  recipe.export %e, "e"
+}

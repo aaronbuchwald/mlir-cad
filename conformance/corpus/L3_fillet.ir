@@ -1,0 +1,5 @@
+recipe.module @L3_fillet {
+  %a = geom.box 200.0, 200.0, 200.0
+  %e = geom.fillet %a, 20.0
+  recipe.export %e, "e"
+}

@@ -1,0 +1,45 @@
+{
+  "_comment": "Graded conformance corpus. class: exact (prismatic/boolean only) | curved (contains analytic-vs-faceted geometry) | capability (op may be unsupported; volume_range instead of volume) | informational (pathological tolerance stressor; diffs reported, never hard-fail). Volumes are closed-form.",
+  "recipes": {
+    "L0_box": {
+      "file": "L0_box.ir", "class": "exact",
+      "elements": {"e": {"volume": 1000000.0, "bbox": [0, 0, 0, 100, 200, 50]}}
+    },
+    "L0_cylinder": {
+      "file": "L0_cylinder.ir", "class": "curved",
+      "elements": {"e": {"volume": 785398.1633974483, "bbox": [-50, -50, 0, 50, 50, 100]}}
+    },
+    "L1_difference": {
+      "file": "L1_difference.ir", "class": "exact",
+      "elements": {"e": {"volume": 750000.0, "bbox": [0, 0, 0, 100, 100, 100]}}
+    },
+    "L1_intersect": {
+      "file": "L1_intersect.ir", "class": "exact",
+      "elements": {"e": {"volume": 500000.0, "bbox": [50, 0, 0, 100, 100, 100]}}
+    },
+    "L1_cyl_cut": {
+      "file": "L1_cyl_cut.ir", "class": "curved",
+      "elements": {"e": {"volume": 3214601.8366025518, "bbox": [0, 0, 0, 200, 200, 100]}}
+    },
+    "L2_expr_center": {
+      "file": "L2_expr_center.ir", "class": "exact",
+      "elements": {"e": {"volume": 3240000000.0, "bbox": [0, 0, 0, 4000, 300, 3000]}}
+    },
+    "L2_pattern": {
+      "file": "L2_pattern.ir", "class": "curved",
+      "elements": {"e": {"volume": 125663706.14371672, "bbox": [-100, -100, 0, 1600, 100, 1000]}}
+    },
+    "L3_fillet": {
+      "file": "L3_fillet.ir", "class": "capability",
+      "elements": {"e": {"volume_range": [7200000.0, 8000000.0], "bbox": [0, 0, 0, 200, 200, 200]}}
+    },
+    "L4_tangent_union": {
+      "file": "L4_tangent_union.ir", "class": "informational",
+      "elements": {"e": {"volume": 2000000.0, "bbox": [0, 0, 0, 200, 100, 100]}}
+    },
+    "L4_tangent_diff": {
+      "file": "L4_tangent_diff.ir", "class": "informational",
+      "elements": {"e": {"volume": 1000000.0, "bbox": [0, 0, 0, 100, 100, 100]}}
+    }
+  }
+}

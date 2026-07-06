@@ -1,0 +1,7 @@
+recipe.module @L1_cyl_cut {
+  %a = geom.box 200.0, 200.0, 100.0
+  %c0 = geom.cylinder 50.0, 200.0
+  %c = geom.translate %c0, [100.0, 100.0, -50.0]
+  %e = geom.difference %a, %c
+  recipe.export %e, "e"
+}

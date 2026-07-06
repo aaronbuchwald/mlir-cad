@@ -1,0 +1,57 @@
+{
+ "target": "sampler",
+ "generated": "2026-07-06T22:26:36.269671+00:00",
+ "geomir_version": "0.1.0",
+ "backend": {
+  "module": "geomir.backends.sampler",
+  "class": "SamplerBackend",
+  "kwargs": {},
+  "access_route": "in-process (pure numpy)"
+ },
+ "ops": {
+  "geom.box": {
+   "supported": true,
+   "max_rel_diff": 0.0
+  },
+  "geom.cylinder": {
+   "supported": true,
+   "max_rel_diff": 0.0018460816850373128
+  },
+  "geom.translate": {
+   "supported": true,
+   "max_rel_diff": 0.0
+  },
+  "geom.union": {
+   "supported": true,
+   "max_rel_diff": 0.003802281368821161
+  },
+  "geom.difference": {
+   "supported": true,
+   "max_rel_diff": 0.0106659947929789
+  },
+  "geom.intersect": {
+   "supported": true,
+   "max_rel_diff": 0.0
+  },
+  "geom.repeat_x": {
+   "supported": true,
+   "max_rel_diff": 0.0018066847335138979
+  },
+  "geom.fillet": {
+   "supported": false,
+   "max_rel_diff": null
+  }
+ },
+ "tolerance_contract": {
+  "exact": 0.02,
+  "curved": 0.02
+ },
+ "corpus_summary": {
+  "PASS": 9,
+  "FAIL": 0,
+  "UNSUPPORTED": 1,
+  "INFO": 0,
+  "ERROR": 0
+ },
+ "scad_roundtrip": true
+}
