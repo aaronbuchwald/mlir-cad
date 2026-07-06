@@ -351,20 +351,24 @@ engineering parameter, not physics — exactly like choosing float equality epsi
 -ffast-math budgets. Restore EPS afterwards.</p></details></div>
 
 <div class="lab"><span class="lt">Lab 4 — extend the dialect (60–90 min)</span>
-<p>Add <code>geom.rotate_z %solid, angle_degrees</code> end-to-end, following the
-checklist in <code>CLAUDE.md</code> (Conventions): OP_SPECS entry in
-<code>geomir/ir.py</code> → evaluator case in <code>eval.py</code> → all three backends
-(OCCT: <code>rotate</code> about the z-axis through the origin; Manifold:
-<code>.rotate([0,0,deg])</code>; sampler: inverse-rotate the query points — mind the
-bbox: rotate its 8 corners and rebound) → <code>scad.py</code> emit
-(<code>rotate([0,0,a])</code>) and lift → a test with a closed-form check (hint: rotation
-preserves volume — assert the wall's volume is unchanged at any angle, and its bbox
-changes). Run <code>python tests/run_tests.py</code> until green.</p>
-<details><summary>Design questions to answer before coding</summary><p>Is rotate_z
-representable in all backends (yes — so no fallback path needed, unlike fillet)? Does the
-scad lifter grammar need a new statement form (yes — mirror how <code>translate</code>
-is parsed)? Does the emitted form stay in the liftable subset (keep it canonical:
-<code>rotate([0, 0, expr])</code> exactly)?</p></details></div>
+<p>Add <code>geom.cone %r_base, %r_top, %h</code> end-to-end, following the checklist in
+<code>CLAUDE.md</code> (Conventions): OP_SPECS entry in <code>geomir/ir.py</code> →
+evaluator case in <code>eval.py</code> → all three backends (Manifold supports cones
+natively: <code>cylinder(h, r_low, r_high, segments)</code>; OCCT:
+<code>cq.Solid.makeCone</code>; sampler: radius varies linearly with z — inverse-test
+<code>x²+y² ≤ r(z)²</code>) → <code>scad.py</code> emit
+(<code>cylinder(h = …, r1 = …, r2 = …)</code>) and lift → a test against the closed form
+V = πh(r₁² + r₁r₂ + r₂²)/3. Run <code>python tests/run_tests.py</code> until green,
+then <code>python -m conformance.run --backend sampler</code> and watch your op appear
+in the report card and manifest. A worked reference for the whole flow: the
+<code>geom.rotate_z</code> and <code>geom.extrude</code> commits
+(<code>git log --oneline | grep dialect-v2</code>).</p>
+<details><summary>Design questions to answer before coding</summary><p>Is cone
+representable in all backends (yes — so no fallback path needed, unlike fillet)? Which
+smoke micro-recipe and tolerance class does it need in
+<code>conformance/run.py</code> (curved — faceted like cylinder)? Does the scad emit
+stay in the liftable subset (extend the <code>cylinder</code> lift to accept
+<code>r1/r2</code> keywords)?</p></details></div>
 
 <div class="lab"><span class="lt">Lab 5 — hand-edit and lift (15 min)</span>
 <p>Open <code>out/model.scad</code> in a text editor (or OpenSCAD — drag the customizer

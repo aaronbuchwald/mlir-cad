@@ -129,9 +129,21 @@ backend can be onboarded by following the skill with zero tribal knowledge.
 Everything not listed above is assumed Fable-autonomous, including all code, tests,
 docs, corpus growth, connector logic, research surveys, and this roadmap's maintenance.
 
-## Current status ledger
+## Current status ledger (updated 2026-07-06, second build pass)
 
-- Phase 0: **built this session** (see conformance/, .claude/skills/, .github/).
-  HC-0 pending: kernel-backed conformance run on the Mac.
-- Phases 1–5: not started; ordered by dependency, parallelizable where independent
-  (Phase 4 runs alongside everything).
+- Phase 0: **done** (conformance harness, fuzzer, manifests, skill, CI,
+  geom.intersect). HC-0 pending: kernel-backed conformance run on the Mac.
+- Phase 1: **partial — license-free slice done**:
+  - done [F]: `geom.rotate_z`, `profile.polygon` + `geom.extrude` (new
+    'profile' value kind), element roles on `recipe.export` (classification,
+    not semantics), validation v2 (mesh area + sampled Hausdorff,
+    `import_artifact(deep=True)`), FreeCAD macro emitter (ast-verified),
+    IFC4 CSG exporter with per-element baked-mesh fallback (**UNVERIFIED**
+    until first ifcopenshell run — VERIFICATION §2), fuzzer/corpus/smoke
+    coverage for all new ops, interactive walkthrough
+    (`courses/04-two-kernels-live.html`), `docs/VERIFICATION.md`.
+  - deferred [F]: revolve/sweep/loft, `tabulate` (index-parameterized
+    arrays), polar patterns, profiles with holes/arcs, IFC *lift*
+    (import IFC's shallow recipes back to geomir), Grasshopper emitter.
+  - human gates unchanged: HC-1 (eyeball IFC in a viewer), HC-2 (ε sign-off).
+- Phases 2–5: not started (first wall: HC-3 Onshape keys).

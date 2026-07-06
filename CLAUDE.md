@@ -15,6 +15,7 @@ lifted from OpenSCAD source.
 
 1. `docs/HANDOFF.md` — session handoff: thesis, what's proven, verification
    boundaries, next steps, resume prompt. **Start here.**
+   (`docs/VERIFICATION.md` = the human checklist; `docs/ROADMAP.md` = the plan.)
 2. `docs/aec-geometry-ir-analysis.md` — the full analysis report (the "why").
 3. `README.md` — demo quickstart and act-by-act walkthrough (the "what").
 4. `docs/research/` — sourced research notes behind the report.
@@ -50,6 +51,9 @@ courses/                           interactive one-day onboarding courses
                                    (export=compilation, import=decompilation,
                                    exchange=binary translation), and hands-on
                                    labs against this repo's demo
+  04-two-kernels-live.html         interactive walkthrough: analytic B-rep vs
+                                   polyhedral mesh side by side, live sliders,
+                                   match_cast verdicts, symbolic centering
 geomir/
   ir.py                            recipe dialect: OP_SPECS, parser, canonical
                                    printer, verifier (SSA, kinds, exports)
@@ -61,6 +65,13 @@ geomir/
   scad.py                          lowering to OpenSCAD source (live params,
                                    expressions, for-loops, import() fallback)
                                    + lifter for the emitted subset
+  validate.py                      validation v2: mesh area + sampled
+                                   Hausdorff (deep flag on import_artifact)
+  freecad_script.py                FreeCAD macro emitter (source-form target;
+                                   ast-verified, runtime-verified by human)
+  ifc_export.py                    IFC4 CSG exporter w/ per-element mesh
+                                   fallback (UNVERIFIED until first
+                                   ifcopenshell run — see VERIFICATION §2)
   backends/occt.py                 OCCT/CadQuery — exact B-rep  [FreeCAD math]
   backends/manifold_backend.py     Manifold — polyhedral mesh   [OpenSCAD math]
   backends/sampler.py              pure-numpy point-membership kernel (test

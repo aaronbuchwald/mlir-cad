@@ -119,6 +119,17 @@ backend (Tekla, Revit, Onshape, IFC…) is a gated playbook — see
 `.claude/skills/add-geomir-target/SKILL.md` and `docs/ROADMAP.md` for the
 phases and the human checkpoints (licenses, installs, credentials).
 
+More targets and views:
+
+```bash
+python -m geomir.ifc_export out/studio_wall.artifact.json out/model.ifc   # openBIM
+python -m geomir.freecad_script recipes/studio_wall.ir out/model_freecad.py
+open courses/04-two-kernels-live.html    # interactive two-kernel walkthrough
+```
+
+Human verification checklist (demo, kernels, fuzzing, edge cases):
+`docs/VERIFICATION.md`.
+
 ## More in this repo
 
 `CLAUDE.md` is the full index. `docs/HANDOFF.md` carries session state and
