@@ -191,6 +191,22 @@ close(S.volume(evaluate_element(lift_v2, S, "L")), 30_000 * 100, 0.02,
 close(S.volume(evaluate_element(lift_v2, S, "Lrot")), 30_000 * 100, 0.02,
       "rotate_z survives scad round trip")
 
+print("== validation v2: mesh area + sampled Hausdorff ==")
+from geomir.validate import mesh_area, hausdorff  # noqa: E402
+
+BOXV = [[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]]
+BOXF = [[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],
+        [1,2,6],[1,6,5],[2,3,7],[2,7,6],[3,0,4],[3,4,7]]
+close(mesh_area(BOXV, BOXF), 6.0, 0.001, "unit-cube mesh area = 6")
+# sampled Hausdorff has a resolution floor ~sqrt(area/n): with n=600 on a
+# 6-area cube that's ~0.1 — assert against that bound, not against zero
+h0 = hausdorff((BOXV, BOXF), (BOXV, BOXF), n=600)
+check(h0 < 0.25, f"self-Hausdorff at sampling-resolution floor ({h0:.3f})")
+BOXV2 = [[x + 0.5, y, z] for x, y, z in BOXV]
+h1 = hausdorff((BOXV, BOXF), (BOXV2, BOXF), n=600)
+check(0.4 < h1 < 0.85, f"shifted cube Hausdorff ~0.5 (got {h1:.3f})")
+check(h1 > 2 * h0, "deep check separates identical from shifted surfaces")
+
 print("== random recipe generator (differential fuzzer seed) ==")
 from conformance.generate import gen_recipe  # noqa: E402
 

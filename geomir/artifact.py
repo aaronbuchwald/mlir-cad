@@ -93,6 +93,7 @@ class ElementResult:
     volume_baked: float
     rel_vol_diff: float | None
     detail: str = ""
+    hausdorff_mm: float | None = None   # deep surface check (validate.py)
 
 
 @dataclass
@@ -121,9 +122,12 @@ def _bbox_ok(a, b, tol: float) -> bool:
 
 def import_artifact(artifact: dict, backend,
                     epsilon_rel_vol: float = 0.005,
-                    bbox_tol: float = 1.0) -> ImportResult:
+                    bbox_tol: float = 1.0,
+                    deep: bool = False) -> ImportResult:
     """Re-evaluate the shipped recipe on `backend` and match_cast each
-    element against the shipped baked oracle."""
+    element against the shipped baked oracle. With deep=True, LIVE elements
+    additionally get a sampled-Hausdorff surface comparison against the
+    baked oracle mesh (validation v2) when both meshes exist."""
     module = parse(artifact["ir"])
     params = dict(artifact["params"])
     result = ImportResult(module=module, params=params,
@@ -137,9 +141,18 @@ def import_artifact(artifact: dict, backend,
             rel = abs(v1 - v0) / abs(v0) if v0 else abs(v1)
             bb_ok = _bbox_ok(backend.bbox(handle), baked["bbox"], bbox_tol)
             if rel <= epsilon_rel_vol and bb_ok:
-                result.elements[name] = ElementResult(
+                r = ElementResult(
                     name, LIVE, True, handle, None, v1, v0, rel,
                     "recipe reproduced within tolerance contract")
+                if deep and baked.get("mesh"):
+                    try:
+                        live_mesh = backend.mesh(handle)
+                        if live_mesh is not None:
+                            from .validate import hausdorff
+                            r.hausdorff_mm = hausdorff(baked["mesh"], live_mesh)
+                    except Exception:
+                        pass  # deep check is advisory, never fatal
+                result.elements[name] = r
             else:
                 why = (f"volume diverged {rel * 100:.3f}% > "
                        f"{epsilon_rel_vol * 100:.2f}%") if rel > epsilon_rel_vol \
