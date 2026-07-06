@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compilers from First Principles — a one-day course</title>
+<style>
+:root { --accent:#059669; --accent-soft:#d1fae5; --ink:#1f2430; --mut:#6b7280;
+        --bg:#f7f8fa; --card:#ffffff; --line:#e5e7eb; --ok:#16a34a; --bad:#dc2626; }
+* { box-sizing:border-box; }
+body { margin:0; font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       color:var(--ink); background:var(--bg); }
+header.top { position:sticky; top:0; z-index:9; background:var(--card);
+       border-bottom:1px solid var(--line); padding:10px 20px; }
+.topline { display:flex; align-items:baseline; gap:14px; max-width:900px; margin:0 auto; flex-wrap:wrap;}
+.topline b { color:var(--accent); }
+.bar { height:6px; background:var(--line); border-radius:3px; overflow:hidden; max-width:900px; margin:8px auto 0;}
+.bar i { display:block; height:100%; width:0%; background:var(--accent); transition:width .3s; }
+main { max-width:900px; margin:0 auto; padding:24px 20px 80px; }
+h1 { font-size:1.9em; margin:.4em 0 .1em; }
+h2 { margin-top:0; font-size:1.35em; }
+h3 { font-size:1.05em; margin:1.4em 0 .4em; }
+.sub { color:var(--mut); margin-bottom:22px; }
+nav.toc { background:var(--card); border:1px solid var(--line); border-radius:10px;
+          padding:14px 18px; margin-bottom:26px; }
+nav.toc a { color:var(--accent); text-decoration:none; }
+nav.toc li { margin:3px 0; }
+section.mod { background:var(--card); border:1px solid var(--line); border-radius:12px;
+              padding:22px 26px; margin:26px 0; }
+.tag { display:inline-block; font-size:.75em; font-weight:600; letter-spacing:.03em;
+       color:var(--accent); background:var(--accent-soft); border-radius:20px;
+       padding:2px 10px; margin-bottom:6px; }
+table { border-collapse:collapse; width:100%; font-size:.92em; margin:12px 0; }
+th,td { border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top; }
+th { background:var(--bg); }
+code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.9em; }
+pre { background:#0f172a; color:#e2e8f0; padding:14px 16px; border-radius:8px;
+      overflow-x:auto; font-size:.85em; line-height:1.5; }
+details { border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin:10px 0;
+          background:var(--bg); }
+details summary { cursor:pointer; font-weight:600; color:var(--accent); }
+.quiz { border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:8px;
+        padding:12px 16px; margin:16px 0; background:var(--bg); }
+.quiz p.qq { font-weight:600; margin:2px 0 10px; }
+.quiz button { display:block; width:100%; text-align:left; margin:5px 0; padding:8px 12px;
+        border:1px solid var(--line); border-radius:7px; background:var(--card); cursor:pointer;
+        font:inherit; }
+.quiz button:hover { border-color:var(--accent); }
+.quiz button.right { border-color:var(--ok); background:#f0fdf4; }
+.quiz button.wrong { border-color:var(--bad); background:#fef2f2; }
+.fb { display:none; margin-top:10px; padding:9px 12px; border-radius:7px; background:#fef2f2; }
+.fb.ok { background:#f0fdf4; }
+label.done { display:flex; gap:9px; align-items:center; margin-top:18px; padding-top:14px;
+             border-top:1px dashed var(--line); font-weight:600; color:var(--accent); cursor:pointer;}
+.svgwrap { text-align:center; margin:16px 0; }
+.note { border-left:4px solid var(--accent); background:var(--accent-soft); border-radius:6px;
+        padding:10px 14px; margin:14px 0; }
+.mut { color:var(--mut); }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="topline"><b>Course 2 / 3</b><span>Compilers from First Principles</span>
+    <span class="mut" id="ptext" style="margin-left:auto">0 / 9 modules</span></div>
+  <div class="bar"><i id="pbar"></i></div>
+</header>
+<main>
+<h1>Compilers from First Principles</h1>
+<p class="sub">A one-day onboarding: what compilers do, the pipeline (front / middle /
+back), IRs and SSA, optimization, LLVM, MLIR, the Relax paper, and the "dark arts" —
+decompilation, binary translation, and testing. Estimated time: <b>~7 hours</b>.
+Read Course 1 first if you haven't; this course points back at it constantly.</p>
+
+<nav class="toc"><b>Modules</b>
+<ol>
+  <li><a href="#m0">What a compiler actually is</a> <span class="mut">(20 min)</span></li>
+  <li><a href="#m1">The front end: text → tree</a> <span class="mut">(45 min)</span></li>
+  <li><a href="#m2">IRs and SSA: the compiler's native language</a> <span class="mut">(60 min)</span></li>
+  <li><a href="#m3">The middle end: optimization &amp; e-graphs</a> <span class="mut">(60 min)</span></li>
+  <li><a href="#m4">The back end: IR → machine, linking, debug info</a> <span class="mut">(45 min)</span></li>
+  <li><a href="#m5">LLVM: why one IR conquered the world</a> <span class="mut">(45 min)</span></li>
+  <li><a href="#m6">MLIR: many IRs, one infrastructure</a> <span class="mut">(50 min)</span></li>
+  <li><a href="#m7">Relax: cross-level IR + symbolic shapes</a> <span class="mut">(60 min)</span></li>
+  <li><a href="#m8">The dark arts + capstone</a> <span class="mut">(60 min)</span></li>
+</ol></nav>
+
+<!-- ============================ MODULE 0 ============================ -->
+<section class="mod" id="m0">
+<span class="tag">Module 0 · 20 min</span>
+<h2>What a compiler actually is</h2>
+<p>A compiler is a <b>semantics-preserving translator</b>: it turns a program in language
+A into a program in language B such that both mean the same thing. Everything else —
+parsing, optimizing, register allocation — is implementation detail in service of that
+one contract.</p>
+<p>Three consequences worth internalizing on day one:</p>
+<ul>
+<li><b>"Mean the same thing" requires a definition of meaning.</b> Languages have
+specifications (semantics). Where the spec is silent — <i>undefined behavior</i> — the
+compiler may do anything. No spec, no compiler; just a converter that works until it
+doesn't. <span class="mut">(Course 3 will ask: what is the spec of a geometry
+kernel? Answer: there isn't one. Hold that thought.)</span></li>
+<li><b>Translation is directional.</b> Lowering (high-level → low-level) discards
+structure by design: your loops, types, and variable names die so the machine can eat.
+Raising (low → high, i.e. decompilation) means <i>reconstructing</i> discarded intent —
+guesswork, not lookup. Lowering is a function; lifting is search.</li>
+<li><b>The pipeline shape is universal.</b> Front end (understand the source) → middle
+end (improve a neutral representation) → back end (emit the target). Every compiler
+you'll ever meet — GCC, LLVM, TVM, the 400-line one in this repo — is this shape.</li>
+</ul>
+<div class="svgwrap">
+<svg viewBox="0 0 720 120" width="100%" style="max-width:720px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="compiler pipeline">
+  <rect x="8"  y="35" width="120" height="50" rx="8" fill="#d1fae5" stroke="#059669"/>
+  <text x="68" y="57" text-anchor="middle" font-size="12" font-weight="700">source text</text>
+  <text x="68" y="74" text-anchor="middle" font-size="10" fill="#6b7280">C, Python, .ir</text>
+  <rect x="168" y="35" width="120" height="50" rx="8" fill="#fff" stroke="#059669"/>
+  <text x="228" y="57" text-anchor="middle" font-size="12" font-weight="700">front end</text>
+  <text x="228" y="74" text-anchor="middle" font-size="10" fill="#6b7280">lex · parse · check</text>
+  <rect x="328" y="35" width="120" height="50" rx="8" fill="#fff" stroke="#059669"/>
+  <text x="388" y="57" text-anchor="middle" font-size="12" font-weight="700">middle end</text>
+  <text x="388" y="74" text-anchor="middle" font-size="10" fill="#6b7280">IR → passes → IR</text>
+  <rect x="488" y="35" width="120" height="50" rx="8" fill="#fff" stroke="#059669"/>
+  <text x="548" y="57" text-anchor="middle" font-size="12" font-weight="700">back end</text>
+  <text x="548" y="74" text-anchor="middle" font-size="10" fill="#6b7280">isel · regalloc · emit</text>
+  <rect x="640" y="35" width="72" height="50" rx="8" fill="#d1fae5" stroke="#059669"/>
+  <text x="676" y="57" text-anchor="middle" font-size="12" font-weight="700">target</text>
+  <text x="676" y="74" text-anchor="middle" font-size="10" fill="#6b7280">x86, GPU…</text>
+  <line x1="128" y1="60" x2="168" y2="60" stroke="#059669" stroke-width="2"/>
+  <line x1="288" y1="60" x2="328" y2="60" stroke="#059669" stroke-width="2"/>
+  <line x1="448" y1="60" x2="488" y2="60" stroke="#059669" stroke-width="2"/>
+  <line x1="608" y1="60" x2="640" y2="60" stroke="#059669" stroke-width="2"/>
+</svg></div>
+<div class="quiz" data-yes="Right. Lowering deliberately destroys high-level structure; decompilation must reconstruct what was destroyed — search over possible sources, not table lookup. Keep this asymmetry front of mind all day."
+     data-no="Think about what lowering throws away, and whether it's recoverable by inspection.">
+<p class="qq">Why is decompiling a binary so much harder than compiling the source that produced it?</p>
+<button onclick="q(this,false)">Binaries are encrypted</button>
+<button onclick="q(this,true)">Lowering destroyed intent (names, types, loops); lifting must reconstruct it by search/inference</button>
+<button onclick="q(this,false)">Assembly has more instructions than C has statements</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m0',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 1 ============================ -->
+<section class="mod" id="m1">
+<span class="tag">Module 1 · 45 min</span>
+<h2>The front end: text → tree</h2>
+<p>Three stages, all mechanical:</p>
+<ol>
+<li><b>Lexing:</b> characters → tokens. <code>"wall_len - win_w"</code> becomes
+<code>[ID(wall_len), MINUS, ID(win_w)]</code>. Regular expressions suffice.</li>
+<li><b>Parsing:</b> tokens → tree, according to a <b>grammar</b> (precedence: <code>*</code>
+binds tighter than <code>+</code>, parentheses group). Output is an <b>AST</b> (abstract
+syntax tree): <code>Sub(Ref("wall_len"), Ref("win_w"))</code>. Recursive descent —
+a function per grammar rule — is the technique you can write by hand in an afternoon.</li>
+<li><b>Semantic analysis:</b> walk the tree, resolve names, check types
+("you can't add a solid to a number"), reject nonsense early.</li>
+</ol>
+<div class="note"><b>You already own a working example.</b> This repo's
+<code>geomir/scad.py</code> contains a complete hand-written front end for a subset of
+OpenSCAD: <code>_TOKEN</code> regex = lexer; the <code>_Lifter.expr/term/factor</code>
+methods = a precedence-climbing recursive-descent parser; <code>geomir/ir.py</code>'s
+<code>verify()</code> = semantic analysis (SSA def-before-use, operand kinds, export
+integrity). Read those ~200 lines after this module — front ends will permanently
+demystify.</div>
+<div class="quiz" data-yes="Correct — the parser enforces the grammar's precedence so the tree is Mul nested inside Add: a + (b * c)."
+     data-no="Which operator binds tighter in the grammar?">
+<p class="qq">What AST does <code>a + b * c</code> parse to?</p>
+<button onclick="q(this,true)">Add(a, Mul(b, c))</button>
+<button onclick="q(this,false)">Mul(Add(a, b), c)</button>
+<button onclick="q(this,false)">A flat list [a, +, b, *, c]</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m1',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 2 ============================ -->
+<section class="mod" id="m2">
+<span class="tag">Module 2 · 60 min</span>
+<h2>IRs and SSA: the compiler's native language</h2>
+<p>ASTs mirror source syntax — awkward for optimization. So compilers translate into an
+<b>intermediate representation (IR)</b>: a language designed for <i>analysis</i>, not for
+humans. The dominant design since the 1990s is <b>SSA — static single assignment</b>
+(Cytron et al., IBM, 1991): every value is assigned <b>exactly once</b>, and every use
+names its unique definition.</p>
+<pre>// source            // SSA form
+x = a + b;            %x1 = add %a, %b
+x = x * 2;            %x2 = mul %x1, 2
+y = x + 1;            %y1 = add %x2, 1</pre>
+<p>Why this is a superpower: def-use chains become explicit graph edges. "Where did this
+value come from?" is a pointer lookup, not a dataflow analysis. Dead code = values with no
+uses. Constant propagation, common-subexpression elimination, dependency analysis — all
+become graph walks. (Control flow joins need φ "phi" functions to merge values from
+different paths — a detail you can absorb later; straight-line SSA is the concept that
+matters today.)</p>
+<div class="note"><b>You already own a working example, again.</b> The recipe IR in this
+repo is SSA: every <code>%name</code> in <code>recipes/studio_wall.ir</code> is defined
+once (the verifier rejects redefinition) and the evaluator resolves uses by name. The
+"backward slice" in <code>geomir/eval.py</code> (<code>mark()</code>) — walking from an
+export back through its transitive dependencies — is textbook SSA def-use traversal, and
+is what makes per-element evaluation possible.</div>
+<p>Two more IR concepts you'll meet constantly:</p>
+<ul>
+<li><b>Multiple IRs per compiler.</b> Real pipelines lower through several: e.g.
+AST → high-level IR → SSA IR → machine IR. Each level makes some class of transformation
+natural and others impossible. <i>Which level you standardize on determines what you can
+express</i> — the single most important sentence for Course 3.</li>
+<li><b>Textual + in-memory forms.</b> Serious IRs have a printable, re-parsable text
+format (LLVM <code>.ll</code>, MLIR <code>.mlir</code>, our <code>.ir</code>) — essential
+for testing (golden files, round-trip checks: see <code>print/parse fixed point</code> in
+this repo's test suite).</li>
+</ul>
+<div class="quiz" data-yes="Yes — single assignment makes every value's origin unambiguous, turning optimizations into cheap graph transformations."
+     data-no="It's not about memory or safety — it's about what analyses become trivial.">
+<p class="qq">The core reason compilers convert to SSA is:</p>
+<button onclick="q(this,false)">It uses less memory than an AST</button>
+<button onclick="q(this,true)">Each value has exactly one definition, so def-use relationships are explicit and optimizations become graph walks</button>
+<button onclick="q(this,false)">It prevents runtime errors</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m2',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 3 ============================ -->
+<section class="mod" id="m3">
+<span class="tag">Module 3 · 60 min</span>
+<h2>The middle end: optimization &amp; e-graphs</h2>
+<p>The middle end is a sequence of <b>passes</b>: each takes IR, returns better IR,
+preserving semantics. Classics:</p>
+<table>
+<tr><th>Pass</th><th>What it does</th></tr>
+<tr><td>Constant folding</td><td><code>2 * 8</code> → <code>16</code> at compile time</td></tr>
+<tr><td>Dead code elimination</td><td>delete values nothing uses (trivial in SSA)</td></tr>
+<tr><td>Common subexpression elimination</td><td>compute <code>(a+b)</code> once, reuse it</td></tr>
+<tr><td>Inlining</td><td>replace a call with the callee's body — the gateway drug: exposes all other optimizations</td></tr>
+<tr><td>Canonicalization</td><td>rewrite equivalent forms to one normal form (<code>x*2</code> → <code>x&lt;&lt;1</code>) so later passes match fewer patterns</td></tr>
+<tr><td>Loop transforms</td><td>unroll, fuse, tile, vectorize — where the big performance lives</td></tr>
+</table>
+<p><b>The phase-ordering problem:</b> passes interact — inlining before folding beats the
+reverse; canonicalizing one way helps pass A, hurts pass B. Pass order is a dark art of
+pipeline tuning.</p>
+<h3>E-graphs: don't pick an order, keep everything</h3>
+<p>The modern answer to phase-ordering is <b>equality saturation</b> (Tate et al. 2009;
+the <code>egg</code> library, POPL 2021): instead of destructively rewriting, an
+<b>e-graph</b> compactly stores <i>all equivalent forms simultaneously</i>. Apply rewrite
+rules until saturation, then <i>extract</i> the best form by any cost function you like.
+No ordering problem — every form coexists.</p>
+<div class="note">Remember this for Course 3: Szalinski (PLDI 2020) uses e-graphs on
+<b>CAD programs</b> — many equivalent constructions of the same shape held at once, then
+extract the most editable one. "Same shape, different recipe" is exactly the cross-CAD
+translation problem.</div>
+<div class="quiz" data-yes="Right — e-graphs sidestep phase-ordering by keeping every equivalent rewrite alive simultaneously, deferring choice to a final extraction with an explicit cost function."
+     data-no="The point isn't speed of rewriting — it's avoiding a destructive commitment to one rewrite order.">
+<p class="qq">What problem does equality saturation primarily solve?</p>
+<button onclick="q(this,false)">Slow parsing</button>
+<button onclick="q(this,false)">Register pressure</button>
+<button onclick="q(this,true)">Phase ordering — destructive rewrites committing too early to one form</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m3',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 4 ============================ -->
+<section class="mod" id="m4">
+<span class="tag">Module 4 · 45 min</span>
+<h2>The back end: IR → machine, linking, debug info</h2>
+<ul>
+<li><b>Instruction selection:</b> map IR ops onto the target's instruction set (ISA) —
+pattern matching IR trees against instructions.</li>
+<li><b>Register allocation:</b> infinite IR values → 16-ish physical registers (graph
+coloring); spill the rest to memory.</li>
+<li><b>Scheduling &amp; emission:</b> order instructions for the pipeline, emit object
+code.</li>
+<li><b>Linking:</b> combine object files, resolve symbols. <b>Symbols matter:</b>
+functions/data are referenced by <i>stable names</i> that survive recompilation of other
+modules — the reason separate compilation works at all. <span class="mut">(Course 1's
+persistent-naming problem is exactly a symbol-stability failure.)</span></li>
+<li><b>Debug info (DWARF):</b> compilers emit side-tables mapping machine code back to
+source lines and variables. The binary carries <i>provenance to its own source</i> —
+lowering plus a paper trail. <span class="mut">(Course 3 steals this idea outright:
+geometry artifacts that carry links back to their recipe.)</span></li>
+</ul>
+<p>Also in the back-end family: <b>runtimes</b> (allocators, exception tables), <b>ABIs</b>
+(call conventions — the "tolerances" of the software world: mismatch them and two
+correct modules corrupt each other), and <b>library calls</b> — the compiler doesn't
+generate everything; it links against hand-optimized vendor code (BLAS, libm). Keep that
+one too; Relax makes it first-class.</p>
+<div class="quiz" data-yes="Exactly — DWARF-style debug info is deliberate provenance: the low-level artifact carries a map back to the high-level source it was lowered from."
+     data-no="One of these is a real mechanism shipped inside almost every binary you've ever debugged.">
+<p class="qq">How can a debugger show you C source lines while executing machine code?</p>
+<button onclick="q(this,false)">It decompiles the binary on the fly</button>
+<button onclick="q(this,true)">The compiler emitted debug info (DWARF): tables mapping instructions back to source locations</button>
+<button onclick="q(this,false)">It re-runs the compiler and diffs</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m4',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 5 ============================ -->
+<section class="mod" id="m5">
+<span class="tag">Module 5 · 45 min</span>
+<h2>LLVM: why one IR conquered the world</h2>
+<p>LLVM (Chris Lattner, UIUC, ~2000–03; supercharged at Apple from 2005; Clang C/C++
+front end 2007) restructured the industry around one idea: <b>a typed, SSA-based,
+target-independent IR as the universal middle layer.</b></p>
+<pre>define i32 @square(i32 %x) {
+entry:
+  %y = mul nsw i32 %x, %x
+  ret i32 %y
+}</pre>
+<p>Any language that lowers to LLVM IR (C, C++, Rust, Swift, Julia, Zig…) instantly gets
+every optimization pass and every backend (x86, ARM, RISC-V, GPUs, WebAssembly). M
+front ends + N back ends = M+N components instead of M×N compilers. Why it worked — three
+preconditions worth memorizing, because Course 3 tests whether they hold for geometry:</p>
+<ol>
+<li><b>A shared abstract machine.</b> All those languages ultimately target the same
+model of computation — linear memory, integer/float arithmetic with defined semantics.
+There was a common "bottom" to lower to.</li>
+<li><b>Specified semantics.</b> LLVM IR has a reference manual; every op's meaning is
+documented, including the undefined-behavior contract that licenses optimization.</li>
+<li><b>Aligned incentives.</b> Apple, Google, and everyone else needed it and funded it;
+its permissive license made adoption free. Nobody's moat depended on the IR being bad.</li>
+</ol>
+<p><b>What LLVM is bad at</b> (setting up the next module): LLVM IR is <i>one level</i> —
+scalar ops, loads, stores. Domain structure (tensor algebra, dataflow graphs, hardware
+circuits — or geometry) is destroyed on entry. If your domain's optimizations live at a
+higher level, LLVM arrives too late to help. By the mid-2010s every ML framework was
+inventing its own incompatible graph IR above LLVM — chaos that motivated…</p>
+<div class="quiz" data-yes="Correct — M+N instead of M×N: every front end meets every back end at one shared, specified IR."
+     data-no="Think about what the shared middle layer does to the number of translator pairs you must build.">
+<p class="qq">The core economic argument for LLVM's design is:</p>
+<button onclick="q(this,false)">SSA is faster to execute</button>
+<button onclick="q(this,true)">A shared IR turns M languages × N targets into M + N components</button>
+<button onclick="q(this,false)">C++ needed a new parser</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m5',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 6 ============================ -->
+<section class="mod" id="m6">
+<span class="tag">Module 6 · 50 min</span>
+<h2>MLIR: many IRs, one infrastructure</h2>
+<p>MLIR (Lattner again, Google, 2019; now an LLVM subproject) is the generalization:
+instead of <i>one</i> IR at one level, provide <b>infrastructure for building many IRs
+("dialects") that coexist in one module and lower progressively into each other.</b></p>
+<ul>
+<li><b>Dialects:</b> namespaced op vocabularies — <code>linalg.matmul</code>,
+<code>affine.for</code>, <code>gpu.launch</code>, <code>llvm.add</code> — each with its
+own verifier and semantics, all sharing one SSA/type/pass framework. Anyone can add one.</li>
+<li><b>Progressive lowering:</b> instead of one cliff-edge drop to LLVM IR, walk down a
+staircase: <code>tensor graph → linalg → loops → vectors → llvm</code>. Each step is a
+small, testable <i>legalization</i> pass, and optimizations run at whichever level they're
+natural.</li>
+<li><b>Mixed levels in one function:</b> during lowering, half your ops can be high-level
+and half low-level, simultaneously. The IR doesn't force a single abstraction level at any
+moment.</li>
+</ul>
+<pre>// two dialects coexisting mid-lowering (illustrative)
+func.func @f(%t: tensor&lt;4x8xf32&gt;) {
+  %0 = linalg.matmul ...          // still high-level tensor algebra
+  %1 = arith.addf %a, %b : f32    // already scalar arithmetic
+  ...
+}</pre>
+<p>MLIR is why "build a compiler for your domain" stopped meaning "reimplement SSA,
+passes, and printers from scratch." Hardware (CIRCT), quantum, fortran (flang), ML — all
+build dialect stacks on it.</p>
+<div class="note"><b>The transferable design lesson</b> (Course 3 lives here): when a
+domain spans multiple abstraction levels, don't standardize one level and force everything
+through it. Let levels coexist with explicit, small lowerings between them — and keep
+high-level ops alive as long as possible, because every lowering is a one-way door.</div>
+<div class="quiz" data-yes="Right — MLIR's bet is many coexisting dialects with progressive lowering, versus LLVM's single fixed-level IR."
+     data-no="It's not about speed or syntax — it's about how many levels of abstraction can live in the IR at once.">
+<p class="qq">MLIR's fundamental departure from LLVM is:</p>
+<button onclick="q(this,false)">A faster register allocator</button>
+<button onclick="q(this,true)">Extensible dialects at multiple abstraction levels coexisting in one module, lowered progressively</button>
+<button onclick="q(this,false)">Replacing SSA with e-graphs</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m6',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 7 ============================ -->
+<section class="mod" id="m7">
+<span class="tag">Module 7 · 60 min</span>
+<h2>Relax: cross-level IR + first-class symbolic shapes</h2>
+<p><i>Relax: Composable Abstractions for End-to-End Dynamic Machine Learning</i>
+(Lai, Shao, Feng, Lyubomirsky et al., ASPLOS 2025 — now the graph IR of Apache TVM)
+attacks a specific pain: compiling LLMs, whose tensor shapes are <b>dynamic</b>
+(batch size, sequence length unknown until runtime), onto dozens of targets. Its three
+ideas are the most transferable compiler ideas of the decade for <i>any</i>
+multi-level domain. The PDF is linked from this repo's report; here's the anatomy:</p>
+
+<h3>Idea 1 — Cross-level abstraction</h3>
+<p>Traditional ML compilers stack separate IRs (computation graph → loop-level tensor
+program → library calls) with <b>single-shot lowering</b> between them: once you drop a
+level, the level above is gone. Relax instead holds <b>all three in one program</b>:</p>
+<pre>def main(x: Tensor(("n", 512), "f32"), w: Tensor((512, 1536), "f32")):
+    n = sym_var()
+    with dataflow():
+        lv0: Tensor((n,1536)) = call_tir(mm, [x, w], ...)       # loop-level tensor program
+        lv1: Tensor((n,3,8,64)) = reshape(lv0, shape(n,3,8,64)) # graph-level op
+        lv2: Tensor((n,8,64)) = call_dps_library(               # opaque vendor library
+              "cutlass.attention", [lv1], ...)</pre>
+<p>Because graph ops, loop programs, and opaque library calls coexist, passes can do
+<b>partial lowering</b> (lower just the matmuls to cuBLAS, optimize the rest yourself),
+<b>analysis feedback</b> (inspect a loop program, learn "this is elementwise," use that to
+drive graph-level fusion), and <b>cross-level transforms</b> (lift a kernel's scratch
+buffer up to the graph's memory planner).</p>
+
+<h3>Idea 2 — First-class symbolic shapes</h3>
+<p>Older IRs mark dynamic dimensions as <code>?</code>/"Any" — erasing everything. Relax
+keeps a <b>symbolic expression per dimension</b> and propagates <i>relations</i>:
+if input is <code>(n, 4)</code>, flatten's output is <code>(4*n,)</code> — still tied to
+the same <code>n</code>. Erasure destroys optimization (can these two buffers be shared?
+unknowable with "Any"; provable with <code>4*n</code> = <code>4*n</code>). The general
+lesson: <b>when you must ship something dynamic/unknown, carry the symbolic relation, not
+a baked value or a shrug.</b></p>
+
+<h3>Idea 3 — match_cast: assert structure, check at runtime</h3>
+<p>Some shapes are genuinely unknowable statically (output of <code>unique()</code>).
+Relax lets the program <b>assert</b> a symbolic shape — <code>lv3 = match_cast(lv2,
+Tensor((m,), "f32"))</code> — introducing new symbolic variable <code>m</code>, backed by
+a cheap <b>runtime check</b> that errors on violation. It's a first-class IR node
+(<code>relax.expr.MatchCast</code>, a binding in TVM's source): first occurrence of
+<code>m</code> <i>binds</i> it from the runtime value; later occurrences <i>assert</i>
+equality. Static when possible, checked-dynamic as the fallback.</p>
+<p><b>Results context:</b> these three ideas let one compiled artifact serve any batch
+size/sequence length, enable dynamic-shape memory planning (~40% activation memory
+reduction on Llama decode in the paper), and deploy LLMs to phones and WebGPU.</p>
+<div class="quiz" data-yes="Yes. 'Any' erases the relation between the two tensors' sizes; the symbolic form keeps 4n tied to n, so equality (and buffer reuse) is provable."
+     data-no="Compare what each annotation lets you PROVE about two differently-shaped tensors sharing memory.">
+<p class="qq">Why is <code>Tensor((4*n,))</code> so much more useful to a compiler than <code>Tensor((?,))</code>?</p>
+<button onclick="q(this,false)">It's shorter to print</button>
+<button onclick="q(this,true)">It preserves the relation to n, so analyses can prove size equalities (e.g., safe buffer reuse) despite dynamism</button>
+<button onclick="q(this,false)">It avoids runtime checks entirely</button>
+<div class="fb"></div>
+</div>
+<div class="quiz" data-yes="Exactly — assert a symbolic structure, bind new symbolic variables from the runtime value, and verify with a cheap inserted check. (Course 3: this pattern, moved to the exchange boundary between CAD kernels, is this repo's central mechanism.)"
+     data-no="It's not a type cast in the C sense — what does the runtime do at a match_cast?">
+<p class="qq">What does Relax's <code>match_cast</code> do?</p>
+<button onclick="q(this,false)">Reinterprets the bytes of a tensor as another dtype</button>
+<button onclick="q(this,true)">Asserts a symbolic shape for a value — binding new symbolic vars — with a runtime check that errors on mismatch</button>
+<button onclick="q(this,false)">Casts a graph op into a loop program</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m7',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 8 ============================ -->
+<section class="mod" id="m8">
+<span class="tag">Module 8 · 60 min</span>
+<h2>The dark arts + capstone</h2>
+<h3>Going backwards and sideways</h3>
+<ul>
+<li><b>Decompilation</b> (binary → source): reconstruct control flow, types, names from
+what lowering left. Modern tools (Ghidra, Hex-Rays) produce <i>a</i> source, never
+<i>the</i> source. It's search/inference — increasingly ML-assisted.</li>
+<li><b>Binary translation</b> (ISA → ISA): run x86 binaries on ARM (Apple's Rosetta 2).
+Hardest part isn't instructions — it's <i>semantic mismatches</i> between machines
+(memory ordering, flags, float behavior). Sound familiar? Two geometry kernels with
+different tolerance regimes are two ISAs with different float semantics.</li>
+<li><b>Transpilation</b> (source → source, editability preserved): C++ → Rust and friends.
+Famously brutal, because the target must remain <i>idiomatic and maintainable</i> — you're
+translating intent, not behavior. <span class="mut">(This — not compilation — is what
+"CAD interop" actually asks for. Course 3, again.)</span></li>
+</ul>
+<h3>Trust: how compilers are tested</h3>
+<ul>
+<li><b>Golden/round-trip tests:</b> print → parse → print must be a fixed point (this
+repo's test suite does exactly this on the recipe IR and the .scad emitter).</li>
+<li><b>Differential testing:</b> generate random programs, run through multiple
+compilers/backends, compare outputs. <b>Csmith</b> found 400+ bugs in GCC/LLVM this way.
+The general recipe: <i>N independent implementations of the same spec = a free
+oracle.</i></li>
+<li><b>Conformance suites</b> define what "implements the language" means. No suite, no
+interoperability — only vibes.</li>
+</ul>
+<h3>Capstone — answer cold</h3>
+<details><summary>1. Why can't you optimize what you erased?</summary><p>Optimizations
+prove facts; erasure (to "Any", to scalars, to triangles) removes the information the
+proof needs. Keep symbolic structure as long as possible — Relax's shapes, MLIR's
+high-level dialects.</p></details>
+<details><summary>2. State LLVM's three preconditions.</summary><p>Shared abstract
+machine to lower to; specified semantics (incl. a UB contract); aligned incentives/funding.
+Remove any one and the universal-IR play fails.</p></details>
+<details><summary>3. MLIR vs LLVM in one sentence.</summary><p>LLVM standardizes one
+low-level IR; MLIR standardizes the <i>infrastructure</i> for many coexisting
+domain-level IRs with progressive lowering between them.</p></details>
+<details><summary>4. Relax's three ideas in one line each.</summary><p>(1) Graph ops,
+loop programs, and opaque library calls in one IR → partial lowering &amp; cross-level
+optimization. (2) Dynamic dimensions as symbolic expressions, relations preserved.
+(3) match_cast: assert + runtime-check structure when static knowledge runs out.</p></details>
+<details><summary>5. Why is transpilation harder than compilation?</summary><p>Compilation
+only preserves behavior; transpilation must preserve editability and idiom — the
+high-level structure that lowering is allowed to destroy.</p></details>
+<p><b>Next:</b> <a href="03-geometry-compilers.html"><b>Course 3 — Geometry × Compilers</b></a>,
+where every concept in this course gets a geometric twin and a lab.</p>
+<label class="done"><input type="checkbox" onchange="td('m8',this)"> Mark module complete</label>
+</section>
+</main>
+
+<script>
+var MODS=["m0","m1","m2","m3","m4","m5","m6","m7","m8"], KEY="geomir-course2";
+function store(){ try{ localStorage.setItem(KEY, JSON.stringify(Array.from(DONE))); }catch(e){} }
+function loadSet(){ try{ return new Set(JSON.parse(localStorage.getItem(KEY)||"[]")); }catch(e){ return new Set(); } }
+var DONE=loadSet();
+function render(){
+  var n=0; MODS.forEach(function(m){ if(DONE.has(m)) n++;
+    var cb=document.querySelector("#"+m+" label.done input"); if(cb) cb.checked=DONE.has(m); });
+  document.getElementById("pbar").style.width=(100*n/MODS.length)+"%";
+  document.getElementById("ptext").textContent=n+" / "+MODS.length+" modules";
+}
+function td(id, cb){ if(cb.checked) DONE.add(id); else DONE.delete(id); store(); render(); }
+function q(btn, ok){
+  var quiz=btn.closest(".quiz");
+  quiz.querySelectorAll("button").forEach(function(b){ b.classList.remove("right","wrong"); });
+  btn.classList.add(ok?"right":"wrong");
+  var fb=quiz.querySelector(".fb"); fb.style.display="block";
+  fb.className="fb"+(ok?" ok":"");
+  fb.textContent= ok ? (quiz.dataset.yes||"Correct.") : (quiz.dataset.no||"Not quite — try again.");
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D Modeling from First Principles — a one-day course</title>
+<style>
+:root { --accent:#2563eb; --accent-soft:#dbeafe; --ink:#1f2430; --mut:#6b7280;
+        --bg:#f7f8fa; --card:#ffffff; --line:#e5e7eb; --ok:#16a34a; --bad:#dc2626; }
+* { box-sizing:border-box; }
+body { margin:0; font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       color:var(--ink); background:var(--bg); }
+header.top { position:sticky; top:0; z-index:9; background:var(--card);
+       border-bottom:1px solid var(--line); padding:10px 20px; }
+.topline { display:flex; align-items:baseline; gap:14px; max-width:900px; margin:0 auto; flex-wrap:wrap;}
+.topline b { color:var(--accent); }
+.bar { height:6px; background:var(--line); border-radius:3px; overflow:hidden; max-width:900px; margin:8px auto 0;}
+.bar i { display:block; height:100%; width:0%; background:var(--accent); transition:width .3s; }
+main { max-width:900px; margin:0 auto; padding:24px 20px 80px; }
+h1 { font-size:1.9em; margin:.4em 0 .1em; }
+h2 { margin-top:0; font-size:1.35em; }
+h3 { font-size:1.05em; margin:1.4em 0 .4em; }
+.sub { color:var(--mut); margin-bottom:22px; }
+nav.toc { background:var(--card); border:1px solid var(--line); border-radius:10px;
+          padding:14px 18px; margin-bottom:26px; }
+nav.toc a { color:var(--accent); text-decoration:none; }
+nav.toc li { margin:3px 0; }
+section.mod { background:var(--card); border:1px solid var(--line); border-radius:12px;
+              padding:22px 26px; margin:26px 0; }
+.tag { display:inline-block; font-size:.75em; font-weight:600; letter-spacing:.03em;
+       color:var(--accent); background:var(--accent-soft); border-radius:20px;
+       padding:2px 10px; margin-bottom:6px; }
+table { border-collapse:collapse; width:100%; font-size:.92em; margin:12px 0; }
+th,td { border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top; }
+th { background:var(--bg); }
+code, pre { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.9em; }
+pre { background:#0f172a; color:#e2e8f0; padding:14px 16px; border-radius:8px; overflow-x:auto; }
+details { border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin:10px 0;
+          background:var(--bg); }
+details summary { cursor:pointer; font-weight:600; color:var(--accent); }
+.quiz { border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:8px;
+        padding:12px 16px; margin:16px 0; background:var(--bg); }
+.quiz p.qq { font-weight:600; margin:2px 0 10px; }
+.quiz button { display:block; width:100%; text-align:left; margin:5px 0; padding:8px 12px;
+        border:1px solid var(--line); border-radius:7px; background:var(--card); cursor:pointer;
+        font:inherit; }
+.quiz button:hover { border-color:var(--accent); }
+.quiz button.right { border-color:var(--ok); background:#f0fdf4; }
+.quiz button.wrong { border-color:var(--bad); background:#fef2f2; }
+.fb { display:none; margin-top:10px; padding:9px 12px; border-radius:7px; background:#fef2f2; }
+.fb.ok { background:#f0fdf4; }
+label.done { display:flex; gap:9px; align-items:center; margin-top:18px; padding-top:14px;
+             border-top:1px dashed var(--line); font-weight:600; color:var(--accent); cursor:pointer;}
+.svgwrap { text-align:center; margin:16px 0; }
+.note { border-left:4px solid var(--accent); background:var(--accent-soft); border-radius:6px;
+        padding:10px 14px; margin:14px 0; }
+.mut { color:var(--mut); }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="topline"><b>Course 1 / 3</b><span>3D Modeling from First Principles</span>
+    <span class="mut" id="ptext" style="margin-left:auto">0 / 7 modules</span></div>
+  <div class="bar"><i id="pbar"></i></div>
+</header>
+<main>
+<h1>3D Modeling from First Principles</h1>
+<p class="sub">A one-day onboarding: how shapes are represented in a computer, the great
+representation families (meshes, B-rep, NURBS, recipes, implicits), the parametric layer
+on top, the kernels that implement it all, sixty years of history, and the open problems. Estimated time: <b>~7 hours</b>.
+Progress is saved locally in your browser.</p>
+
+<nav class="toc"><b>Modules</b>
+<ol>
+  <li><a href="#m0">The one question everything follows from</a> <span class="mut">(20 min)</span></li>
+  <li><a href="#m1">Sixty years of history in one arc</a> <span class="mut">(60 min)</span></li>
+  <li><a href="#m2">The representation families (incl. NURBS)</a> <span class="mut">(2 h)</span></li>
+  <li><a href="#m3">The parametric layer</a> <span class="mut">(90 min)</span></li>
+  <li><a href="#m4">Kernels: the industry's hidden engines</a> <span class="mut">(60 min)</span></li>
+  <li><a href="#m5">Open challenges</a> <span class="mut">(45 min)</span></li>
+  <li><a href="#m6">Capstone check</a> <span class="mut">(30 min)</span></li>
+</ol></nav>
+
+<!-- ============================ MODULE 0 ============================ -->
+<section class="mod" id="m0">
+<span class="tag">Module 0 · 20 min</span>
+<h2>The one question everything follows from</h2>
+<p>A physical object has infinitely many points. A computer has finite memory. So the
+foundational question of all 3D modeling is:</p>
+<div class="note"><b>How do you describe a continuous 3D shape with a finite amount of
+data — such that the operations you care about are fast, exact enough, and don't break?</b></div>
+<p>Every representation in this course is a different answer, and every answer is a
+trade. The three axes of the trade:</p>
+<ul>
+<li><b>Exactness.</b> Is a cylinder <i>actually</i> a cylinder (radius stored as a number,
+surface evaluated analytically), or an approximation (many flat facets)?</li>
+<li><b>Robustness.</b> Do operations (especially booleans: union, subtract, intersect)
+always succeed, or can they fail on edge cases?</li>
+<li><b>Queryability.</b> Can you ask for "that edge," "this face," "the volume,"
+"a section cut at z=1.2m"? Some representations have named parts (topology); others are
+undifferentiated soup.</li>
+</ul>
+<p>Spoiler for the whole day: <b>no representation wins all three.</b> Exact
+representations are fragile; robust ones are approximate; queryable ones are heavy. That
+impossibility is why multiple representation families coexist, why every serious tool
+picks one and optimizes around it, and why translating between tools is so painful (the
+subject of Course 3).</p>
+<p>One more first principle: distinguish the <b>shape</b> from the <b>recipe</b> that made
+it. "A box minus a cylinder" is a recipe; the resulting solid with its 10 faces is a shape.
+Systems that store recipes can regenerate when you change a parameter; systems that store
+only shapes cannot. Hold this distinction — the entire second half of the day (and all of
+Course 3) rests on it.</p>
+
+<div class="quiz" data-yes="Right. An STL sphere is thousands of flat triangles; the radius as a concept is gone — you can only estimate it by fitting. Exactness was traded away at export."
+     data-no="Look again at the exactness axis — what does a triangle mesh store?">
+<p class="qq">Warm-up: you export a sphere to an STL file (a triangle mesh). What did you lose?</p>
+<button onclick="q(this,false)">Nothing — the sphere is still there</button>
+<button onclick="q(this,true)">The analytic surface: the file has no radius, just facets that approximate one</button>
+<button onclick="q(this,false)">The color and material</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m0',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 1 ============================ -->
+<section class="mod" id="m1">
+<span class="tag">Module 1 · 60 min</span>
+<h2>Sixty years of history in one arc</h2>
+<p>The history is worth an hour because nearly every "why is it like this?!" you'll ever
+ask has a historical answer. Click each era.</p>
+
+<details open><summary>1963 — Sketchpad: constraints came first</summary>
+<p>Ivan Sutherland's <b>Sketchpad</b> (MIT PhD, light pen on a vector display) is the
+big-bang artifact. Astonishingly, it already had <b>constraint solving</b> — you drew
+sloppy lines and told the system "these are perpendicular, these are equal length," and it
+solved for the geometry. The industry then took ~25 years to ship that idea commercially.
+Lesson one of CAD history: the ideas are old; the engineering to make them robust is what
+takes decades.</p></details>
+
+<details><summary>1960s–70s — Surfaces from car bodies: Bézier, de Casteljau, Coons, NURBS</summary>
+<p>Freeform surface math came from the auto industry: <b>Paul de Casteljau</b> at Citroën
+(1959) and <b>Pierre Bézier</b> at Renault (UNISURF, late 60s) invented control-point
+curves so designers could specify smooth car panels numerically; <b>Steven Coons</b> (MIT)
+gave the patch framework. Ken Versprille's 1975 PhD introduced <b>NURBS</b> (Non-Uniform
+Rational B-Splines), which unify freeform curves AND exact conics (circles, ellipses) in
+one formula — that unification is why NURBS became the standard exchange currency of
+surface geometry.</p></details>
+
+<details><summary>Early 1970s — The two rival answers to "what is a solid?"</summary>
+<p>Two schools formed, and both of their answers are still under everything today:</p>
+<ul>
+<li><b>B-rep (boundary representation)</b> — Ian Braid's BUILD system at Cambridge:
+describe a solid by its skin — faces, edges, vertices, with connectivity. The Cambridge
+group's commercial lineage runs BUILD → Romulus → <b>Parasolid</b> (1988) and
+<b>ACIS</b> (1989, named for founders Alan Grayer, Charles Lang, Ian Braid). Two research
+colleagues' kernels ended up powering most of world CAD.</li>
+<li><b>CSG (constructive solid geometry)</b> — Requicha &amp; Voelcker at Rochester
+(PADL): describe a solid as a <i>formula</i> — primitives combined by union/intersect/
+subtract. Compact, always mathematically valid, but you must <i>evaluate</i> it to get
+faces you can point at.</li>
+</ul>
+<p>Notice: CSG stores a recipe, B-rep stores a shape. The tension of Module 0, already
+institutionalized by 1975.</p></details>
+
+<details><summary>1978–87 — Meshes, subdivision, STL</summary>
+<p>Entertainment and graphics went polygonal: Ed Catmull &amp; Jim Clark's
+<b>subdivision surfaces</b> (1978) let a coarse polygon cage define a smooth limit
+surface (Pixar's workhorse). <b>Marching cubes</b> (Lorensen &amp; Cline 1987) converted
+volume/implicit data to meshes. And 3D Systems' <b>STL format</b> (1987) — raw triangle
+soup, no topology, no units — became 3D printing's lingua franca, a lowest common
+denominator we still live with.</p></details>
+
+<details><summary>1987 — Pro/ENGINEER: the parametric revolution</summary>
+<p>Samuel Geisberg's PTC shipped <b>Pro/ENGINEER</b>: models as <b>feature histories</b> —
+sketch, extrude, hole, fillet, pattern — replayed in order, driven by dimensions, with
+constraint-solved sketches (Sketchpad's idea, 24 years later). Change a dimension,
+regenerate, everything downstream updates. It ate the MCAD market; SolidWorks (1995)
+brought the same paradigm to Windows on the Parasolid kernel. It also created a new
+disease: the <b>persistent naming problem</b> (Module 3).</p></details>
+
+<details><summary>2000 — Revit: parametrics become behavioral (BIM)</summary>
+<p>Two PTC alumni (Leonid Raiz, Irwin Jungreis) asked: what does parametric mean for
+<i>buildings</i>? Their answer — <b>Revit</b> (acquired by Autodesk 2002) — was not a
+feature tree but a network of <b>behavioral objects</b>: walls that auto-join, windows
+hosted by walls, a change-propagation engine keeping plans/sections/schedules consistent.
+The IFC exchange standard (buildingSMART, from the mid-90s) grew alongside. The behavior
+lives in compiled application code, not in any file — which is precisely why BIM interop
+is hard (Course 3).</p></details>
+
+<details><summary>2007–now — Dataflow, direct modeling, implicits, code, AI</summary>
+<ul>
+<li><b>Grasshopper</b> (2007, on Rhino): parametric modeling as a visual <b>dataflow
+graph</b> — architects' favorite; no history tree, just a program you can see.</li>
+<li><b>Direct modeling</b> (SpaceClaim 2007, Siemens Synchronous Tech): push/pull faces
+on dumb B-rep, inferring intent — a reaction against brittle history trees.</li>
+<li><b>Implicits return</b> (nTop, 2015+): fields instead of surfaces, because lattices
+and topology-optimized parts break B-rep booleans (Module 2).</li>
+<li><b>Code-CAD</b> (OpenSCAD 2010, CadQuery, build123d, Zoo/KCL): the recipe as literal
+source code — git-diffable, and lately, the representation LLMs prefer to write.</li>
+<li><b>AI lifting</b> (2018→): neural nets and program synthesis that recover recipes
+from dumb geometry — decompilers for shapes.</li>
+</ul></details>
+
+<div class="quiz" data-yes="Yes — feature-history parametrics (Pro/E, 1987). Sketchpad had constraints in 1963, but replayable, dimension-driven feature history is what changed CAD's economics."
+     data-no="It's later than that — think about what made 'change one dimension, everything updates' possible.">
+<p class="qq">Which innovation turned CAD from "electronic drafting" into "models that regenerate when a dimension changes"?</p>
+<button onclick="q(this,false)">Sketchpad's light pen (1963)</button>
+<button onclick="q(this,false)">NURBS (1975)</button>
+<button onclick="q(this,true)">Feature-history parametric modeling (Pro/ENGINEER, 1987)</button>
+<button onclick="q(this,false)">STL (1987)</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m1',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 2 ============================ -->
+<section class="mod" id="m2">
+<span class="tag">Module 2 · 2 h — the heart of the course</span>
+<h2>The representation families — and NURBS, the thread through them</h2>
+
+<h3>2.1 Meshes — the shape as facets</h3>
+<p><b>Math:</b> a list of vertices (points) and faces (usually triangles) connecting them.
+Optionally with connectivity structure (half-edge data structures) so you can walk from a
+face to its neighbors.</p>
+<p><b>Strengths:</b> universal (GPUs eat triangles), simple, robust to render, and — with
+modern exact arithmetic — booleans on meshes can be made bulletproof (this is what the
+<i>Manifold</i> library, OpenSCAD's engine, does). <b>Weaknesses:</b> approximate (curvature
+is gone; a "cylinder" is N flat rectangles), heavy for smooth shapes (quality costs
+polygons), and semantically flat — there is no "the top face," just triangles 4,017–4,562.
+Watch for the manifold/watertight distinction: triangle <i>soup</i> (STL) may have gaps,
+duplicate vertices, self-intersections; solid modeling on meshes requires a closed,
+consistently-oriented, non-self-intersecting surface — a <b>manifold</b> mesh.</p>
+<p><b>Where:</b> games/film (OBJ, glTF), 3D printing (STL, 3MF), scanning, simulation
+input, viewers (Navisworks tessellates <i>everything</i> for review speed).</p>
+
+<h3>2.2 B-rep — the shape as an exact skin with named parts</h3>
+<p><b>Math:</b> two coupled layers. <b>Topology</b>: a graph of vertices → edges → loops →
+faces → shells → solids ("what touches what"). <b>Geometry</b>: each face carries an exact
+surface (plane, cylinder, sphere, torus, NURBS), each edge an exact curve, each vertex a
+point ("where things are"). Faces are <i>trimmed</i>: the surface is infinite; the loops
+of edges bound the used region.</p>
+<div class="svgwrap">
+<svg viewBox="0 0 640 240" width="100%" style="max-width:640px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="B-rep topology and geometry layers">
+  <rect x="10" y="10" width="300" height="220" rx="10" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="160" y="34" text-anchor="middle" font-size="14" font-weight="700" fill="#1d4ed8">TOPOLOGY (connectivity)</text>
+  <text x="160" y="62" text-anchor="middle" font-size="12" fill="#1f2430">solid</text>
+  <text x="160" y="88" text-anchor="middle" font-size="12" fill="#1f2430">shell</text>
+  <text x="160" y="114" text-anchor="middle" font-size="12" fill="#1f2430">face — loop</text>
+  <text x="160" y="140" text-anchor="middle" font-size="12" fill="#1f2430">edge</text>
+  <text x="160" y="166" text-anchor="middle" font-size="12" fill="#1f2430">vertex</text>
+  <line x1="160" y1="68" x2="160" y2="76" stroke="#1d4ed8"/><line x1="160" y1="94" x2="160" y2="102" stroke="#1d4ed8"/>
+  <line x1="160" y1="120" x2="160" y2="128" stroke="#1d4ed8"/><line x1="160" y1="146" x2="160" y2="154" stroke="#1d4ed8"/>
+  <text x="160" y="200" text-anchor="middle" font-size="11" fill="#6b7280">"face 12 is bounded by edges 3,7,9,14"</text>
+  <rect x="330" y="10" width="300" height="220" rx="10" fill="#f0fdf4" stroke="#86efac"/>
+  <text x="480" y="34" text-anchor="middle" font-size="14" font-weight="700" fill="#15803d">GEOMETRY (exact math)</text>
+  <text x="480" y="70" text-anchor="middle" font-size="12">face → surface: plane / cylinder(r) / NURBS</text>
+  <text x="480" y="100" text-anchor="middle" font-size="12">edge → curve: line / arc / intersection curve</text>
+  <text x="480" y="130" text-anchor="middle" font-size="12">vertex → point (x, y, z)</text>
+  <text x="480" y="170" text-anchor="middle" font-size="11" fill="#6b7280">each topological entity carries exact math</text>
+  <text x="480" y="200" text-anchor="middle" font-size="11" fill="#6b7280">— and (in real kernels) a tolerance</text>
+  <line x1="310" y1="120" x2="330" y2="120" stroke="#6b7280" stroke-dasharray="4 3"/>
+</svg></div>
+<p><b>Strengths:</b> exact (πr²h volumes to machine precision — you saw this in the repo's
+demo where OCCT's colonnade matched closed form to the decimal); has <i>named parts</i>,
+which is what makes fillets ("round <b>this edge</b>"), drawings, dimensioning, machining,
+and quantity takeoff possible. <b>Weaknesses:</b> heavy; and booleans require
+surface–surface intersection — numerically hairy code full of heuristics for tangencies
+and near-coincidence. B-rep booleans <i>can fail</i>. This fragility is the deepest
+engineering fact about CAD kernels.</p>
+<p><b>Where:</b> every serious MCAD/AEC authoring tool: Parasolid (NX, SolidWorks,
+Vectorworks…), ACIS/ShapeManager (AutoCAD), CGM (CATIA), OCCT (FreeCAD — open source),
+plus Revit's proprietary kernel. Files: STEP, and each kernel's native format.</p>
+
+<h3>2.3 NURBS — the freeform math, and surface modeling as a paradigm</h3>
+<p><b>Math:</b> a NURBS curve/surface is a piecewise-polynomial blend of <b>control
+points</b>: each point pulls the shape toward itself with an influence defined by a
+<b>degree</b> (how smooth), a <b>knot vector</b> (where influence regions begin/end), and
+a per-point <b>weight</b>. Move a control point, the surface follows — sculpting with a
+cage instead of touching the surface.</p>
+<p><b>The "R" is the genius part.</b> NURBS = Non-Uniform <b>Rational</b> B-Spline; the
+weights make it rational, and rational curves can represent conics <i>exactly</i> — a
+circle, an ellipse, a cylinder — which plain polynomial curves (Bézier/B-spline)
+mathematically cannot. One formula therefore covers <i>both</i> sculpted freeform panels
+<i>and</i> exact machine geometry. That unification (Versprille's 1975 thesis, Module 1)
+is why NURBS became the exchange currency of surface geometry: it's the freeform surface
+type inside IGES, STEP, and nearly every B-rep kernel.</p>
+<p><b>Continuity is the craft:</b> surfaces meeting with matching position (G0), tangency
+(G1), or curvature (G2). Automotive "Class-A" surfacing is the discipline of G2+
+continuity — reflections on a car body instantly reveal curvature breaks. This is why
+Gehry's office needed CATIA-grade surfacing (Course 1, Module 1) for fabrication.</p>
+<p><b>NURBS plays two distinct roles</b> — keep them separate in your head:</p>
+<ul>
+<li><b>As geometry inside B-rep (2.2):</b> the freeform faces of a solid are trimmed
+NURBS patches; the kernel guarantees the solid's topology.</li>
+<li><b>As a standalone paradigm — surface modeling (Rhino, Alias):</b> you build, trim,
+and join skins directly; a "solid" is merely a closed skin sealed within the document
+tolerance. Total sculptural freedom — but watertightness is <i>your</i> job, and
+downstream solid operations inherit your tolerance sins.</li>
+</ul>
+<p><b>Where:</b> Rhino/Grasshopper (openNURBS), automotive Class-A (Alias, CATIA/ICEM),
+ship hulls, freeform façades — anywhere surface quality is the product.</p>
+<div class="quiz" data-yes="Exactly — the rational weights. Without them, no polynomial curve can be exactly circular, and CAD would need separate machinery for freeform vs analytic shapes. With them, one representation serves both — hence NURBS as the exchange currency."
+     data-no="It's in the name — what does 'Rational' add mathematically that plain B-splines lack?">
+<p class="qq">What does the "Rational" in NURBS buy that made it the industry standard?</p>
+<button onclick="q(this,false)">Faster rendering on GPUs</button>
+<button onclick="q(this,true)">Per-point weights let it represent conics (circles, ellipses) exactly — freeform and exact geometry in one formula</button>
+<button onclick="q(this,false)">Automatic watertightness of joined surfaces</button>
+<div class="fb"></div>
+</div>
+
+<h3>2.4 CSG &amp; procedural — the shape as a recipe</h3>
+<p><b>Math:</b> a tree (or program). Leaves are primitives (box, cylinder, extrusion of a
+profile); internal nodes are operations (union, difference, transform, pattern). The shape
+is defined as "whatever this evaluates to."</p>
+<p><b>Strengths:</b> tiny, perfectly editable (change a leaf parameter, re-evaluate),
+inherently valid, diffable — this is the "recipe" side of Module 0's distinction, and it's
+exactly what the <code>recipes/studio_wall.ir</code> file in this repo is.
+<b>Weaknesses:</b> you can't point at a face (there are no faces until evaluation); the
+result depends on the evaluator — <i>the same recipe evaluated by two engines gives
+slightly different geometry</i> (Course 3's central problem); and pure-primitive CSG can't
+express arbitrary freeform shapes.</p>
+<p><b>Where:</b> OpenSCAD (recipe as code, evaluated by the Manifold mesh engine),
+IFC's extruded/boolean solids, Tekla's profile+cut parts, every feature-history system
+secretly (a history tree IS a richer CSG).</p>
+
+<h3>2.5 Implicits / SDFs — the shape as a function</h3>
+<p><b>Math:</b> a scalar field f(x,y,z); the solid is everywhere f ≤ 0. A signed distance
+field (SDF) is the special case where |f| is the distance to the surface. A sphere is
+<code>f = √(x²+y²+z²) − r</code>.</p>
+<p><b>Strengths:</b> booleans become pointwise <code>min</code>/<code>max</code> —
+<b>they cannot fail</b>, on any input, ever. Offsets ("grow by 3mm") are just
+<code>f − 3</code>. Perfect for lattices, blends, topology-optimization output — geometry
+with millions of features where B-rep would explode. <b>Weaknesses:</b> no topology at
+all — no faces, no edges, nothing to dimension or machine until you reconstruct a surface
+(marching cubes → mesh); asking "where exactly is the boundary" costs sampling.</p>
+<p><b>Where:</b> nTop, shader/procedural art (Inigo Quilez's SDF ray-marching), medical
+volumes — and the <code>geomir/backends/sampler.py</code> in this repo, which classifies
+points against membership functions: a working, 100-line implicit kernel.</p>
+
+<h3>2.6 The comparison, and the punchline</h3>
+<table>
+<tr><th></th><th>Mesh</th><th>B-rep</th><th>NURBS surfaces</th><th>CSG/recipe</th><th>Implicit</th></tr>
+<tr><td>Exact?</td><td>no</td><td><b>yes</b></td><td><b>yes</b> (incl. conics)</td><td>as evaluated</td><td><b>yes</b> (as a field)</td></tr>
+<tr><td>Booleans robust?</td><td>yes (modern exact)</td><td><b>no</b> (heuristic)</td><td>no (trims/joins in tolerance)</td><td>n/a (recipe)</td><td><b>perfectly</b></td></tr>
+<tr><td>Named faces/edges?</td><td>no</td><td><b>yes</b></td><td>patches &amp; trims</td><td>no (until eval)</td><td>no</td></tr>
+<tr><td>Editable intent?</td><td>no</td><td>no (shape only)</td><td>control cage (sculptural)</td><td><b>yes</b> (parametric)</td><td>partially (the formula)</td></tr>
+<tr><td>Size for smooth shapes</td><td>large</td><td>small</td><td>small</td><td><b>tiny</b></td><td><b>tiny</b></td></tr>
+<tr><td>Natural habitat</td><td>render, print, scan</td><td>manufacture, document</td><td>freeform surfacing</td><td>design intent</td><td>lattices, fields</td></tr>
+</table>
+<div class="note">The punchline you should carry out of today: <b>real systems layer a
+recipe on top of one evaluated representation</b> — and which evaluated representation
+they pick (exact B-rep vs mesh vs field) is determined by their domain's dominant
+operation. That choice then leaks into everything: file formats, robustness, what
+"import" can possibly mean.</div>
+
+<div class="quiz" data-yes="Correct. Fillets are defined on edges — B-rep is the only family where edges exist as first-class, nameable entities. (This is exactly why the demo's pedestal falls back to baked geometry on the mesh kernel.)"
+     data-no="Which representation has edges as actual objects you can reference?">
+<p class="qq">"Round this edge with r=20mm" is only directly expressible in one family. Which?</p>
+<button onclick="q(this,false)">Mesh</button>
+<button onclick="q(this,true)">B-rep</button>
+<button onclick="q(this,false)">Implicit/SDF</button>
+<button onclick="q(this,false)">CSG primitives</button>
+<div class="fb"></div>
+</div>
+
+<div class="quiz" data-yes="Yes — min/max on fields cannot fail regardless of input. That by-construction robustness is nTop's entire pitch, and why lattice-scale work went implicit."
+     data-no="Think about which family computes booleans without any surface-intersection code at all.">
+<p class="qq">Which family's booleans literally cannot fail?</p>
+<button onclick="q(this,false)">B-rep (surface–surface intersection)</button>
+<button onclick="q(this,true)">Implicit (booleans are pointwise min/max)</button>
+<button onclick="q(this,false)">Mesh (triangle clipping)</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m2',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 3 ============================ -->
+<section class="mod" id="m3">
+<span class="tag">Module 3 · 90 min</span>
+<h2>The parametric layer</h2>
+<p>Module 2 was about the <i>evaluated</i> shape. This module is about the recipe layer on
+top — where design intent lives. There are five paradigms; every tool you'll ever meet is
+one of them (or a hybrid).</p>
+
+<h3>3.1 Direct modeling — no recipe</h3>
+<p>Push and pull the evaluated geometry itself (SketchUp, SpaceClaim, AutoCAD solids).
+Simple mental model, nothing to regenerate, nothing to break — and no intent retained.
+"The hole is gone" — which hole? There's no hole; there's an absence of material.</p>
+
+<h3>3.2 Feature history — the replayed program</h3>
+<p>The MCAD standard (Pro/E → SolidWorks, CATIA, NX, Onshape, FreeCAD): an ordered list of
+operations, each referencing results of earlier ones. Sketches inside features are solved
+by a <b>geometric constraint solver</b> — and here is a wild industry fact: nearly every
+competing CAD product licenses the <i>same</i> solver, Siemens' D-Cubed DCM. Rivals share
+an organ.</p>
+<p>Feature history's chronic disease is the <b>persistent naming problem</b>. Work through
+this slowly — it matters more than anything else in this module:</p>
+<details open><summary>The persistent naming problem, step by step</summary>
+<ol>
+<li>Feature 1: extrude a rectangular sketch → a box. The kernel numbers its faces 1–6,
+edges 1–12.</li>
+<li>Feature 2: fillet <b>edge 7</b> (the reference is stored as "edge 7 of feature 1's
+result").</li>
+<li>You edit the sketch: add a notch to the rectangle. The extrusion now has 8 faces and
+18 edges — <b>the kernel renumbers everything</b>.</li>
+<li>Feature 2 replays: "fillet edge 7." Which edge is 7 <i>now</i>? Maybe the wrong one.
+Maybe none. Your model breaks, or worse, silently fillets the wrong edge.</li>
+</ol>
+<p>Split and merge make it fundamentally hard: if my referenced edge got cut in two, which
+half does the name follow? Research has chewed on this since the 90s (Kripac 1997;
+Marcheix &amp; Pierra's 2002 survey). FreeCAD shipped its fix only in v1.0 (Nov 2024).
+Onshape's FeatureScript has the most PL-flavored solution: references are stored as
+<b>queries</b> ("the edge created by feature X from sketch segment Y"), resolved fresh
+against current topology each regeneration — late binding instead of hard-coded
+numbers.</p></details>
+
+<h3>3.3 Dataflow graphs — the visible program</h3>
+<p>Grasshopper (Rhino), Dynamo (Revit), GenerativeComponents (Bentley): nodes are
+operations, wires are data, the whole recipe is a diagram. It's functional programming
+with a GUI — no hidden regeneration order, trivially parallel to reason about. Weakness:
+graphs of real projects grow into thousand-node spaghetti with no abstraction mechanism
+beyond "cluster."</p>
+
+<h3>3.4 Behavioral objects — the recipe as rules (BIM)</h3>
+<p>Revit families, ArchiCAD GDL objects: the object carries <i>behavior</i> — a wall knows
+how to join other walls; a window knows how to cut and attach to its host wall; changing a
+level height propagates to everything on that level. The "program" is a network of
+domain-specific rules executed by a change-propagation engine. Powerful for buildings;
+catastrophic for interoperability, because <b>the rules are compiled vendor code</b> — no
+file format carries them.</p>
+
+<h3>3.5 Code-CAD — the recipe as literal source</h3>
+<p>OpenSCAD, CadQuery/build123d (Python on OCCT), Zoo's KCL: the model IS a program in a
+text file. Versionable, diffable, reviewable, generatable — and notably the representation
+of choice for LLM-driven CAD. The repo you're sitting in is a code-CAD artifact:
+<code>recipes/studio_wall.ir</code> is a recipe in a deliberately minimal language, and
+<code>out/model.scad</code> is the same recipe lowered to OpenSCAD's language with
+parameters kept live.</p>
+
+<div class="quiz" data-yes="Exactly. Topology gets renumbered on regeneration, so stored entity references dangle or grab the wrong entity — that's the persistent naming problem. Late-bound queries (Onshape) are the robust fix."
+     data-no="The failure isn't in the solver or the kernel math — it's in how feature 2 refers to a piece of feature 1's output.">
+<p class="qq">You edit an early sketch and a downstream fillet attaches to the wrong edge. What failed?</p>
+<button onclick="q(this,false)">The constraint solver diverged</button>
+<button onclick="q(this,true)">Entity references broke when topology was renumbered — persistent naming</button>
+<button onclick="q(this,false)">Floating-point error in the boolean</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m3',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 4 ============================ -->
+<section class="mod" id="m4">
+<span class="tag">Module 4 · 60 min</span>
+<h2>Kernels: the industry's hidden engines</h2>
+<p>A <b>geometry kernel</b> is the library implementing Module 2 for real: the B-rep data
+structures, the surface intersectors, the boolean algorithms, tessellation, mass
+properties. Kernels are decades-old, million-line codebases; almost nobody writes a new
+one. Who runs on what:</p>
+<table>
+<tr><th>Kernel</th><th>Owner</th><th>Used by (selection)</th></tr>
+<tr><td>Parasolid</td><td>Siemens</td><td>NX, SolidWorks, Onshape, MicroStation, Vectorworks, Allplan</td></tr>
+<tr><td>ACIS → ShapeManager fork</td><td>Spatial (Dassault) / Autodesk</td><td>AutoCAD, Inventor, Fusion</td></tr>
+<tr><td>CGM</td><td>Dassault</td><td>CATIA, 3DEXPERIENCE (and Gehry's Digital Project)</td></tr>
+<tr><td>OCCT (open source)</td><td>Open Cascade</td><td>FreeCAD, CadQuery/build123d, IfcOpenShell — and this repo's OCCT backend</td></tr>
+<tr><td>Proprietary in-house</td><td>—</td><td>Revit, ArchiCAD, Tekla, Rhino (openNURBS), SketchUp</td></tr>
+<tr><td>Manifold (open source, mesh)</td><td>—</td><td>OpenSCAD's boolean engine — and this repo's mesh backend</td></tr>
+</table>
+<p>Note the irony rows: Dassault (SolidWorks) pays arch-rival Siemens for Parasolid;
+nearly everyone licenses Siemens' D-Cubed constraint solver. Sharing happens when
+economics permit — kernels are just usually the moat, not the shared part.</p>
+
+<h3>Tolerances: the dirty secret</h3>
+<p>Floating point can't represent "these two surfaces touch" exactly, so every kernel
+defines coincidence-within-ε. But they disagree on ε and on where it lives:
+Parasolid's session precision is ~1e-8 (with per-entity local tolerances — think of
+edges as thin <i>tubes</i> and vertices as tiny <i>spheres</i>); classic ACIS uses ~1e-6;
+OCCT attaches tolerances to each shape. Consequences:</p>
+<ul>
+<li>A solid watertight at 1e-6 has <i>real gaps</i> at 1e-8. The same model can be valid
+in one kernel and broken in another — with no one at fault.</li>
+<li>Kernels have private procedural surface types (rolling-ball blends, lazily evaluated
+intersection curves) that must be approximated on export, shifting geometry by tiny
+amounts that then violate someone's ε.</li>
+<li>Hence an entire commercial industry — CADfix, Elysium, HOOPS Exchange — whose product
+is <b>"healing"</b>: re-stitching, re-trimming, and re-tolerancing geometry so the target
+kernel will accept it. Its 30-year persistence is proof that even dumb-geometry exchange
+is unsolved.</li>
+</ul>
+<div class="quiz" data-yes="Right — and note nobody is 'wrong': each kernel is self-consistent. The mismatch of tolerance regimes is structural. (Course 3 frames this as ISAs with different floating-point semantics.)"
+     data-no="Neither kernel has a bug, and the file isn't corrupt. What differs between the two systems' definitions of 'touching'?">
+<p class="qq">A STEP file imports cleanly into ACIS but Parasolid reports open shells. Most likely cause?</p>
+<button onclick="q(this,false)">The file is corrupt</button>
+<button onclick="q(this,false)">Parasolid has a boolean bug</button>
+<button onclick="q(this,true)">Gaps below ACIS's ~1e-6 tolerance are real gaps at Parasolid's ~1e-8</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m4',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 5 ============================ -->
+<section class="mod" id="m5">
+<span class="tag">Module 5 · 45 min</span>
+<h2>Open challenges — where the field actually is</h2>
+<ol>
+<li><b>Boolean robustness.</b> Still not solved for B-rep after 50 years; heuristics near
+tangencies. Newest attack: exact-arithmetic mesh CSG (TOG 2025) — robustness by
+construction, at the mesh level.</li>
+<li><b>Persistent naming.</b> Solved-ish within single systems (queries, FreeCAD 1.0);
+utterly unsolved <i>across</i> systems — the blocker for exchanging editable models.</li>
+<li><b>Interoperability.</b> The recipe/behavior layer doesn't survive any standard
+exchange (IFC, STEP); evaluated geometry barely survives (tolerances). This is Course 3
+entirely.</li>
+<li><b>Scale.</b> Federated building models and 100k-part assemblies: instancing,
+streaming, level-of-detail — why coordination tools tessellate everything.</li>
+<li><b>The AI wave.</b> Text/image/scan → recipe (DeepCAD, CAD-Recode, Fusion360 Gallery
+datasets); LLMs writing code-CAD; and lifting dumb geometry back to editable intent —
+decompilers for shapes. The most active frontier as of 2026, and it pressures the whole
+industry toward code-like, liftable representations.</li>
+</ol>
+<div class="note"><b>Connection to this repo:</b> the demo you can run
+(<code>python demo.py</code>) is a working miniature of challenge #3: one recipe evaluated
+by two kernels with different math (OCCT B-rep vs Manifold mesh), with a tolerance
+contract catching their disagreement, per-element fallback, and source-level lifting.
+Course 3 turns it into labs.</div>
+<label class="done"><input type="checkbox" onchange="td('m5',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 6 ============================ -->
+<section class="mod" id="m6">
+<span class="tag">Module 6 · 30 min</span>
+<h2>Capstone check</h2>
+<p>You're onboarded when you can answer these cold (each expands):</p>
+<details><summary>1. Why can't I get "the radius" out of an STL file?</summary>
+<p>STL is evaluated, approximated geometry — triangle soup. The analytic cylinder was
+destroyed at tessellation; radius is now a curve-fitting estimate, not a stored fact.</p></details>
+<details><summary>2. Why does the same boolean succeed in kernel A and fail in kernel B?</summary>
+<p>Different tolerance regimes (what counts as "touching") and different heuristic
+surface-intersection code. Both kernels are self-consistent; the disagreement is
+structural.</p></details>
+<details><summary>3. Why did fillet fail after I edited an early sketch?</summary>
+<p>Persistent naming: the fillet referenced a topological entity by identity; regeneration
+renumbered topology; the reference dangled or bound wrongly. Fix pattern: late-bound
+semantic queries.</p></details>
+<details><summary>4. Why do lattice/generative tools use implicits?</summary>
+<p>Field booleans are pointwise min/max — infallible and O(1) per query — where B-rep
+booleans on a million-strut lattice are combinatorially explosive and failure-prone. The
+price: no faces/edges until reconstruction.</p></details>
+<details><summary>5. What's the difference between a shape and a recipe, and which do
+standard exchange formats carry?</summary>
+<p>Recipe = the parametric program (editable intent); shape = its evaluated result.
+Exchange formats overwhelmingly carry shapes (plus shallow recipe fragments in IFC), which
+is why imported models arrive frozen. The consequences and the fix-shaped-hole are
+Course 3.</p></details>
+<p><b>Further reading in this repo:</b> <code>docs/research/kernels.md</code> (sourced
+per-tool kernel map), <code>docs/aec-geometry-ir-analysis.md</code> §1–3, and
+<code>geomir/backends/</code> — three working kernels in miniature you can read in 15
+minutes.</p>
+<p>Next: <a href="02-compilers.html"><b>Course 2 — Compilers from First Principles</b></a>.</p>
+<label class="done"><input type="checkbox" onchange="td('m6',this)"> Mark module complete</label>
+</section>
+</main>
+
+<script>
+var MODS=["m0","m1","m2","m3","m4","m5","m6"], KEY="geomir-course1";
+function store(){ try{ localStorage.setItem(KEY, JSON.stringify(Array.from(DONE))); }catch(e){} }
+function loadSet(){ try{ return new Set(JSON.parse(localStorage.getItem(KEY)||"[]")); }catch(e){ return new Set(); } }
+var DONE=loadSet();
+function render(){
+  var n=0; MODS.forEach(function(m){ if(DONE.has(m)) n++;
+    var cb=document.querySelector("#"+m+" label.done input"); if(cb) cb.checked=DONE.has(m); });
+  document.getElementById("pbar").style.width=(100*n/MODS.length)+"%";
+  document.getElementById("ptext").textContent=n+" / "+MODS.length+" modules";
+}
+function td(id, cb){ if(cb.checked) DONE.add(id); else DONE.delete(id); store(); render(); }
+function q(btn, ok){
+  var quiz=btn.closest(".quiz");
+  quiz.querySelectorAll("button").forEach(function(b){ b.classList.remove("right","wrong"); });
+  btn.classList.add(ok?"right":"wrong");
+  var fb=quiz.querySelector(".fb"); fb.style.display="block";
+  fb.className="fb"+(ok?" ok":"");
+  fb.textContent= ok ? (quiz.dataset.yes||"Correct.") : (quiz.dataset.no||"Not quite — try again.");
+}
+render();
+</script>
+</body>
+</html>

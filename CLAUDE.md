@@ -36,6 +36,18 @@ docs/
     compilers-for-cad.md           e-graphs, program-synthesis lifting,
                                    persistent naming, the "no MLIR-for-CAD
                                    exists" gap; sourced + flagged
+courses/                           interactive one-day onboarding courses
+                                   (self-contained HTML, open in a browser;
+                                   progress + quizzes, saved via localStorage)
+  01-3d-modeling.html              3D modeling from first principles: the four
+                                   representation families, parametric layer,
+                                   kernels/tolerances, 60-year history
+  02-compilers.html                compilers from first principles: pipeline,
+                                   SSA, e-graphs, LLVM, MLIR, Relax, dark arts
+  03-geometry-compilers.html       the blend: Rosetta table, three workflows
+                                   (export=compilation, import=decompilation,
+                                   exchange=binary translation), and hands-on
+                                   labs against this repo's demo
 geomir/
   ir.py                            recipe dialect: OP_SPECS, parser, canonical
                                    printer, verifier (SSA, kinds, exports)

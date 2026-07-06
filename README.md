@@ -85,6 +85,10 @@ tests/run_tests.py              29 checks, pure Python, run anywhere
 `CLAUDE.md` is the full index. `docs/HANDOFF.md` carries session state and
 next steps; `docs/aec-geometry-ir-analysis.md` is the analysis this demo
 implements; `docs/research/` holds the sourced research notes behind it.
+`courses/` contains three interactive one-day onboarding courses (open the
+HTML files in a browser): 3D modeling from first principles, compilers from
+first principles (LLVM/MLIR/Relax), and the blend — with labs that run
+against this repo's demo.
 
 ## Honest limitations (by design)
 

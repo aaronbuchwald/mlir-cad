@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geometry × Compilers — workflows and labs</title>
+<style>
+:root { --accent:#7c3aed; --accent-soft:#ede9fe; --ink:#1f2430; --mut:#6b7280;
+        --bg:#f7f8fa; --card:#ffffff; --line:#e5e7eb; --ok:#16a34a; --bad:#dc2626; }
+* { box-sizing:border-box; }
+body { margin:0; font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       color:var(--ink); background:var(--bg); }
+header.top { position:sticky; top:0; z-index:9; background:var(--card);
+       border-bottom:1px solid var(--line); padding:10px 20px; }
+.topline { display:flex; align-items:baseline; gap:14px; max-width:900px; margin:0 auto; flex-wrap:wrap;}
+.topline b { color:var(--accent); }
+.bar { height:6px; background:var(--line); border-radius:3px; overflow:hidden; max-width:900px; margin:8px auto 0;}
+.bar i { display:block; height:100%; width:0%; background:var(--accent); transition:width .3s; }
+main { max-width:900px; margin:0 auto; padding:24px 20px 80px; }
+h1 { font-size:1.9em; margin:.4em 0 .1em; }
+h2 { margin-top:0; font-size:1.35em; }
+h3 { font-size:1.05em; margin:1.4em 0 .4em; }
+.sub { color:var(--mut); margin-bottom:22px; }
+nav.toc { background:var(--card); border:1px solid var(--line); border-radius:10px;
+          padding:14px 18px; margin-bottom:26px; }
+nav.toc a { color:var(--accent); text-decoration:none; }
+nav.toc li { margin:3px 0; }
+section.mod { background:var(--card); border:1px solid var(--line); border-radius:12px;
+              padding:22px 26px; margin:26px 0; }
+.tag { display:inline-block; font-size:.75em; font-weight:600; letter-spacing:.03em;
+       color:var(--accent); background:var(--accent-soft); border-radius:20px;
+       padding:2px 10px; margin-bottom:6px; }
+table { border-collapse:collapse; width:100%; font-size:.92em; margin:12px 0; }
+th,td { border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top; }
+th { background:var(--bg); }
+code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.9em; }
+pre { background:#0f172a; color:#e2e8f0; padding:14px 16px; border-radius:8px;
+      overflow-x:auto; font-size:.85em; line-height:1.5; }
+details { border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin:10px 0;
+          background:var(--bg); }
+details summary { cursor:pointer; font-weight:600; color:var(--accent); }
+.quiz { border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:8px;
+        padding:12px 16px; margin:16px 0; background:var(--bg); }
+.quiz p.qq { font-weight:600; margin:2px 0 10px; }
+.quiz button { display:block; width:100%; text-align:left; margin:5px 0; padding:8px 12px;
+        border:1px solid var(--line); border-radius:7px; background:var(--card); cursor:pointer;
+        font:inherit; }
+.quiz button:hover { border-color:var(--accent); }
+.quiz button.right { border-color:var(--ok); background:#f0fdf4; }
+.quiz button.wrong { border-color:var(--bad); background:#fef2f2; }
+.fb { display:none; margin-top:10px; padding:9px 12px; border-radius:7px; background:#fef2f2; }
+.fb.ok { background:#f0fdf4; }
+label.done { display:flex; gap:9px; align-items:center; margin-top:18px; padding-top:14px;
+             border-top:1px dashed var(--line); font-weight:600; color:var(--accent); cursor:pointer;}
+.svgwrap { text-align:center; margin:16px 0; }
+.note { border-left:4px solid var(--accent); background:var(--accent-soft); border-radius:6px;
+        padding:10px 14px; margin:14px 0; }
+.lab { border:1px solid #c4b5fd; border-radius:10px; padding:14px 18px; margin:16px 0;
+       background:#faf5ff; }
+.lab .lt { font-weight:700; color:var(--accent); }
+.mut { color:var(--mut); }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="topline"><b>Course 3 / 3</b><span>Geometry × Compilers</span>
+    <span class="mut" id="ptext" style="margin-left:auto">0 / 7 modules</span></div>
+  <div class="bar"><i id="pbar"></i></div>
+</header>
+<main>
+<h1>Geometry × Compilers</h1>
+<p class="sub">The synthesis course: every compiler concept from Course 2 has a geometric
+twin from Course 1. We build the dictionary, walk three real-world workflows through it,
+study the MLIR/Relax-shaped fix, and then get hands-on — this repo's demo is the lab
+bench. Estimated time: <b>~5 hours</b> (2h reading, 3h labs). Prereqs: Courses 1 and 2,
+and a working <code>./setup.sh</code> in this repo.</p>
+
+<nav class="toc"><b>Modules</b>
+<ol>
+  <li><a href="#m0">The Rosetta Stone</a> <span class="mut">(30 min)</span></li>
+  <li><a href="#m1">Workflow 1 — export is compilation</a> <span class="mut">(40 min)</span></li>
+  <li><a href="#m2">Workflow 2 — import is decompilation</a> <span class="mut">(40 min)</span></li>
+  <li><a href="#m3">Workflow 3 — cross-kernel exchange is binary translation</a> <span class="mut">(30 min)</span></li>
+  <li><a href="#m4">The fix: what MLIR + Relax prescribe</a> <span class="mut">(45 min)</span></li>
+  <li><a href="#m5">Labs on the geomir demo</a> <span class="mut">(2–3 h)</span></li>
+  <li><a href="#m6">Frontier: the three wedges + capstone</a> <span class="mut">(30 min)</span></li>
+</ol></nav>
+
+<!-- ============================ MODULE 0 ============================ -->
+<section class="mod" id="m0">
+<span class="tag">Module 0 · 30 min</span>
+<h2>The Rosetta Stone</h2>
+<p>Learn this table cold — it's the entire course in one screen. Everything after is
+walking rows of it through real workflows.</p>
+<table>
+<tr><th>CAD / BIM world</th><th>Compiler world</th><th>Why the mapping is exact</th></tr>
+<tr><td>Native parametric model (Revit, feature tree)</td><td>Source program</td><td>Editable intent; meaning defined by the authoring app's engine — its "runtime"</td></tr>
+<tr><td>Regeneration / evaluating the recipe</td><td>Compilation / evaluation</td><td>Recipe in, evaluated artifact out; deterministic per engine</td></tr>
+<tr><td>IFC / STEP / STL export</td><td>Object code emission</td><td>Lowered, editability destroyed by design</td></tr>
+<tr><td>IFC import → frozen DirectShape</td><td>Failed decompilation → run the binary in a box</td><td>Can't reconstruct intent, so wrap the artifact uneditably</td></tr>
+<tr><td>Cross-kernel B-rep exchange</td><td>Binary translation between ISAs</td><td>Same "program", machines with different float/tolerance semantics</td></tr>
+<tr><td>Healing middleware (CADfix, Elysium)</td><td>Binary patching / fixups</td><td>Post-hoc repair so the target machine accepts the artifact</td></tr>
+<tr><td>Persistent naming problem</td><td>Symbol stability across recompilation</td><td>References into regenerated output must re-resolve</td></tr>
+<tr><td>Onshape FeatureScript queries</td><td>Late binding / symbolic references</td><td>Resolve by description at use-time, not by hard address</td></tr>
+<tr><td>MVDs (IFC Reference View…)</td><td>Language profiles / subsets</td><td>Certified dialect smaller than the full language</td></tr>
+<tr><td>CAx-IF STEP test rounds</td><td>Manual differential testing</td><td>N implementations cross-checked as each other's oracle</td></tr>
+<tr><td>D-Cubed DCM licensed by all rivals</td><td>A shared libm</td><td>Common component under competing products</td></tr>
+<tr><td>Tessellation settings ($fn, segments)</td><td>-O flags / -ffast-math</td><td>Lowering policy, not part of the program</td></tr>
+</table>
+<div class="quiz" data-yes="Right — the wall arrives as evaluated geometry whose intent can't be reconstructed, so Revit wraps it read-only. Emulating an un-decompilable binary in a sandbox is the same move."
+     data-no="Check the table — what does a system do with an artifact it can execute (display) but not understand (edit)?">
+<p class="qq">Revit importing IFC as an uneditable DirectShape corresponds to…</p>
+<button onclick="q(this,false)">Linking against a shared library</button>
+<button onclick="q(this,true)">Failing to decompile a binary, so running it in an opaque wrapper instead</button>
+<button onclick="q(this,false)">Constant folding</button>
+<div class="fb"></div>
+</div>
+<div class="quiz" data-yes="Exactly — tolerance regimes are the kernels' floating-point semantics. Same instruction, different machine behavior — the classic binary-translation trap."
+     data-no="Think about what differs between two CPUs that makes the same binary behave differently — then map it to Parasolid's 1e-8 vs ACIS's 1e-6.">
+<p class="qq">Two kernels disagreeing on whether surfaces touch (1e-8 vs 1e-6 tolerance) is the geometric version of…</p>
+<button onclick="q(this,false)">A parser ambiguity</button>
+<button onclick="q(this,false)">A register allocation failure</button>
+<button onclick="q(this,true)">ISAs with different floating-point semantics defeating binary translation</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m0',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 1 ============================ -->
+<section class="mod" id="m1">
+<span class="tag">Module 1 · 40 min</span>
+<h2>Workflow 1 — export is compilation</h2>
+<p>Trace one Revit wall (hosted window, joined at both ends) through export, watching what
+each "lowering pass" destroys. This is a real pipeline, annotated in compiler terms:</p>
+<ol>
+<li><b>Source:</b> wall = family type + parameters + behavioral relations (join rules,
+host for the window, top constrained to Level 3). Meaning defined by Revit's
+change-propagation engine — <i>semantics live in the vendor runtime</i>.</li>
+<li><b>Lowering 1 — behavior → relations:</b> IFC can record the <i>results</i> of
+behavior (<code>IfcRelConnectsPathElements</code>, <code>IfcRelVoidsElement</code> +
+<code>IfcRelFillsElement</code>) but not the <i>rules</i>. The join logic — compiled C++ —
+has no representation. <span class="mut">Compiler twin: emitting a trace of what the
+program did, instead of the program.</span></li>
+<li><b>Lowering 2 — parametrics → shallow recipe:</b> the wall body can become
+<code>IfcExtrudedAreaSolid</code> (profile + direction + depth) with the opening as a
+boolean subtraction. Note what died here: <code>height = Level3.elev − Level2.elev</code>
+baked to <code>3000.0</code>. <b>The relation is erased, exactly like erasing a symbolic
+shape to "Any"</b> (Course 2, Module 7).</li>
+<li><b>Lowering 3 — recipe → evaluated geometry:</b> for anything nonstandard, exporters
+fall to B-rep or tessellation. And the certified exchange profile (IFC4 Reference View)
+is deliberately tessellation-oriented — <i>the conformance-tested path is the lowest
+one</i>. Compiler twin: the only certified output is -O0 assembly.</li>
+<li><b>Object code:</b> a .ifc file. Displayable everywhere, editable nowhere.</li>
+</ol>
+<div class="note">Key asymmetry to internalize: <b>each lowering was locally reasonable;
+the composition is a one-way trapdoor.</b> No single pass "broke" the model — semantics
+leaked out one level at a time. Compilers accept this because binaries only need to run.
+Buildings need re-editing for decades — the artifact's <i>purpose</i> is different, so
+wholesale adoption of the compile-down model was a category error.</div>
+<div class="quiz" data-yes="Correct — and that erasure is precisely Relax's 'Any' problem. The value 3000 is right today and meaningless tomorrow; the relation was the design."
+     data-no="Focus on step 3 — what happened to Level3.elev − Level2.elev?">
+<p class="qq">The wall's height was defined as Level3.elev − Level2.elev. After IFC export it is 3000.0. What compiler failure is this?</p>
+<button onclick="q(this,false)">A parse error</button>
+<button onclick="q(this,true)">Erasure of symbolic relations — the geometric "erased to Any"</button>
+<button onclick="q(this,false)">Register spilling</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m1',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 2 ============================ -->
+<section class="mod" id="m2">
+<span class="tag">Module 2 · 40 min</span>
+<h2>Workflow 2 — import is decompilation</h2>
+<p>Now run the pipeline backwards: a consultant sends you that .ifc and you must
+<i>continue designing</i> in your tool. You are now a decompiler. Your options, exactly
+parallel to reverse engineering a binary:</p>
+<ol>
+<li><b>Wrap it (what tools actually do):</b> Revit → DirectShape. The geometry displays,
+clashes, schedules — but is frozen. Equivalent: run the binary in a sandbox; don't pretend
+you understand it.</li>
+<li><b>Pattern-match idioms:</b> recognize "vertical extrusion, 300mm profile, boolean
+opening" → probably a wall with a window. This is what "parametric-preferred" importers
+and academic <i>semantic enrichment</i> (rule-based, GNN-based) do. Equivalent: a
+decompiler recognizing loop idioms and calling conventions. Works on clean output; breaks
+on anything creative.</li>
+<li><b>Program synthesis / ML lifting:</b> search for a recipe whose evaluation matches
+the target: InverseCSG (mesh → CSG program), Point2CAD (point cloud → B-rep), CAD-Recode
+(point cloud → executable CadQuery, via an LLM), Szalinski (e-graphs compressing flat CSG
+into editable parametric programs — with loops! — by equality saturation). Equivalent:
+modern ML-assisted decompilation. Research-grade but improving fast.</li>
+</ol>
+<p>The reason all three struggle is Course 2's iron law: <b>lifting is search over what
+lowering destroyed.</b> One shape has infinitely many recipes; you want not <i>a</i>
+recipe but a <i>maintainable, idiomatic</i> one matching the original design intent —
+transpilation-hard, not compilation-hard.</p>
+<div class="quiz" data-yes="Yes — e-graphs hold many equivalent programs at once and extract by cost. Szalinski's cost is editability/structure; a cross-CAD translator's cost would be 'idiomatic for the target system.' Same machinery."
+     data-no="Recall Course 2 Module 3 — what structure holds many equivalent programs simultaneously and extracts by a cost function?">
+<p class="qq">Why are e-graphs the right middle-end for shape lifting?</p>
+<button onclick="q(this,false)">They render meshes faster</button>
+<button onclick="q(this,true)">One shape has many equivalent recipes; e-graphs hold them all and extract the best for a chosen cost (editability, target idiom)</button>
+<button onclick="q(this,false)">They store tolerances exactly</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m2',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 3 ============================ -->
+<section class="mod" id="m3">
+<span class="tag">Module 3 · 30 min</span>
+<h2>Workflow 3 — cross-kernel exchange is binary translation</h2>
+<p>Even with zero parametrics — pure evaluated B-rep, STEP file, "just the shape" —
+exchange fails routinely. The compiler lens says why, in three beats:</p>
+<ol>
+<li><b>Different machines:</b> Parasolid (ε≈1e-8, per-entity tolerances), ACIS (ε≈1e-6),
+CGM, OCCT — each a self-consistent "ISA" with private float semantics. A solid watertight
+on machine A has real gaps on machine B.</li>
+<li><b>Unrepresentable instructions:</b> kernels carry private procedural surfaces
+(rolling-ball blends, lazy intersection curves) that the neutral format can't express —
+approximated on export, shifting geometry by exactly the amounts that violate ε.</li>
+<li><b>The patch industry:</b> healing middleware re-stitches, re-trims, re-tolerances —
+binary fixups so the target loader accepts the module. Its 30-year persistence is the
+proof that the "machines" genuinely differ.</li>
+</ol>
+<p>And the gap nobody has filled: <b>there is no Csmith for geometry kernels</b> — no
+systematic differential-testing campaign generating random solids and cross-checking
+kernels against each other. N kernels are a free oracle no one has used. (Verified absent
+as of July 2026 — see <code>docs/research/compilers-for-cad.md</code>.)</p>
+<div class="quiz" data-yes="Right — differential testing: generate inputs, run several independent implementations, flag disagreement. Csmith did it to C compilers; nobody has done it to Parasolid/ACIS/OCCT."
+     data-no="Course 2, Module 8 — what testing technique uses N implementations as each other's oracle?">
+<p class="qq">You want to build an empirical "spec" of what geometry kernels actually agree on. The compiler-world technique is…</p>
+<button onclick="q(this,false)">Fuzzing one kernel for crashes</button>
+<button onclick="q(this,true)">Differential testing: same generated inputs through all kernels, disagreements are findings</button>
+<button onclick="q(this,false)">Formal verification of each kernel</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m3',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 4 ============================ -->
+<section class="mod" id="m4">
+<span class="tag">Module 4 · 45 min</span>
+<h2>The fix: what MLIR + Relax prescribe</h2>
+<p>Assemble the prescription from the three workflows' failures:</p>
+<div class="svgwrap">
+<svg viewBox="0 0 720 300" width="100%" style="max-width:720px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="multi-level geometry IR stack">
+  <rect x="20" y="16"  width="420" height="52" rx="8" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="230" y="38" text-anchor="middle" font-size="13" font-weight="700">D4 · intent / constraints</text>
+  <text x="230" y="56" text-anchor="middle" font-size="11" fill="#6b7280">symbolic relations, behavioral contracts</text>
+  <rect x="20" y="84"  width="420" height="52" rx="8" fill="#f5f3ff" stroke="#7c3aed"/>
+  <text x="230" y="106" text-anchor="middle" font-size="13" font-weight="700">D3 · recipe (features, CSG, patterns)</text>
+  <text x="230" y="124" text-anchor="middle" font-size="11" fill="#6b7280">references = semantic queries, never face #7</text>
+  <rect x="20" y="152" width="420" height="52" rx="8" fill="#faf5ff" stroke="#7c3aed"/>
+  <text x="230" y="174" text-anchor="middle" font-size="13" font-weight="700">D2 · exact geometry (B-rep + explicit ε)</text>
+  <text x="230" y="192" text-anchor="middle" font-size="11" fill="#6b7280">the baked oracle lives here</text>
+  <rect x="20" y="220" width="420" height="52" rx="8" fill="#ffffff" stroke="#7c3aed"/>
+  <text x="230" y="242" text-anchor="middle" font-size="13" font-weight="700">D1 · mesh (always present, always renders)</text>
+  <text x="230" y="260" text-anchor="middle" font-size="11" fill="#6b7280">the floor everyone can stand on</text>
+  <line x1="230" y1="68" x2="230" y2="84" stroke="#7c3aed" stroke-width="2"/>
+  <line x1="230" y1="136" x2="230" y2="152" stroke="#7c3aed" stroke-width="2"/>
+  <line x1="230" y1="204" x2="230" y2="220" stroke="#7c3aed" stroke-width="2"/>
+  <rect x="470" y="84" width="230" height="120" rx="10" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="585" y="110" text-anchor="middle" font-size="12" font-weight="700">ONE artifact carries all levels</text>
+  <text x="585" y="132" text-anchor="middle" font-size="11">+ provenance links between them</text>
+  <text x="585" y="154" text-anchor="middle" font-size="11">(debug info for geometry)</text>
+  <text x="585" y="182" text-anchor="middle" font-size="11" fill="#6b7280">consumer lifts as high as it can,</text>
+  <text x="585" y="197" text-anchor="middle" font-size="11" fill="#6b7280">falls back per element</text>
+</svg></div>
+<ol>
+<li><b>From MLIR — dialects, not a single level.</b> Don't standardize one representation
+(that's STEP/IFC, and it's the disease). Let intent, recipe, exact geometry, and mesh
+coexist as dialects in one artifact with small, explicit lowerings. Consumers execute the
+highest dialect they speak. Degradation is <b>per element, never per file</b> — partial
+lowering, exactly as MLIR mixes dialects mid-flight.</li>
+<li><b>From Relax idea 2 — never bake relations.</b> <code>(wall_len − win_w)/2</code>
+travels as an expression. Where dynamism/unknowns force baking a value, keep the symbolic
+form attached beside it.</li>
+<li><b>From Relax idea 3 — match_cast at the exchange boundary.</b> Ship recipe <b>and</b>
+baked oracle; the importer <i>re-evaluates the recipe on its own kernel and diffs against
+the oracle</i>. Within tolerance → element goes LIVE (parametric on the new kernel).
+Unsupported op or divergence → checked FALLBACK to the baked level, flagged. The
+tolerance problem stops being silent corruption and becomes a contract violation with a
+handler.</li>
+<li><b>From Relax idea 1 — opaque calls are first-class.</b> Where semantics are
+irreducibly proprietary (Revit's join resolution), represent them as calls to named
+external evaluators — <code>call_dps_library</code> for geometry. Honest FFI beats fake
+portability.</li>
+<li><b>From LLVM's preconditions — the missing substrate.</b> Geometry lacks specified
+semantics (no kernel spec) and aligned incentives (lock-in pays). Differential testing can
+manufacture an empirical spec; AI demand for liftable representations may supply the
+incentive. Until then, expect this architecture to win in wedges, not by standards decree.</li>
+</ol>
+<div class="quiz" data-yes="Correct on all counts: recipe + oracle + re-evaluate + diff + per-element fallback = Relax's static-when-possible, checked-dynamic-when-not, transposed to the kernel boundary."
+     data-no="Re-read fix #3 — what two things does the artifact carry, and what does the importer DO with them?">
+<p class="qq">The match_cast pattern applied to CAD exchange means:</p>
+<button onclick="q(this,false)">Casting a mesh to a B-rep by reinterpreting its bytes</button>
+<button onclick="q(this,true)">Ship recipe + baked oracle; importer re-evaluates on its kernel, diffs vs the oracle, goes LIVE within ε or falls back per element</button>
+<button onclick="q(this,false)">Requiring both kernels to use identical tolerances</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m4',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 5 ============================ -->
+<section class="mod" id="m5">
+<span class="tag">Module 5 · 2–3 h · hands-on</span>
+<h2>Labs on the geomir demo</h2>
+<p>Everything in Module 4 is running code in this repo. Terminal open, venv active
+(<code>source .venv/bin/activate</code>).</p>
+
+<div class="lab"><span class="lt">Lab 1 — read the IR as a compilers person (20 min)</span>
+<p>Open <code>recipes/studio_wall.ir</code>. Identify: the SSA discipline (every
+<code>%name</code> defined once); the two "dialects" in play (<code>expr.*</code> scalars,
+<code>geom.*</code> solids) plus module structure (<code>recipe.*</code>); the symbolic
+relation for window centering; the op that only a B-rep kernel can execute. Then open
+<code>geomir/ir.py</code> and find the verifier doing def-before-use and operand-kind
+checking — semantic analysis in ~60 lines.</p>
+<details><summary>Check yourself</summary><p>Dialects: <code>recipe.param/export</code>,
+<code>expr.add/sub/mul/div</code>, <code>geom.box/cylinder/translate/union/difference/
+repeat_x/fillet</code>. The symbolic relation: <code>%free = expr.sub %wall_len, %win_w;
+%win_x = expr.div %free, 2.0</code>. The B-rep-only op: <code>geom.fillet</code> —
+mesh kernels have no edges to fillet.</p></details></div>
+
+<div class="lab"><span class="lt">Lab 2 — run the six acts, name the compiler concept (30 min)</span>
+<p>Run <code>python demo.py</code>. For each act, say aloud which Course 2 concept it
+demonstrates, then check:</p>
+<details><summary>Answer key</summary><ol>
+<li>Act 1 (OCCT bake): lowering to machine A + emitting the artifact <i>with debug
+info</i> (recipe + oracle + provenance).</li>
+<li>Act 2 (Manifold import): match_cast at a kernel boundary; per-element partial
+lowering — fillet → checked FALLBACK, the rest LIVE.</li>
+<li>Act 3 (12 segments): differential semantics between "ISAs" caught by the tolerance
+contract — the (N/2π)·sin(2π/N) factor is the two machines' float disagreement, measured.</li>
+<li>Act 4 (edit win_w, col_n post-exchange): proof the program stayed <i>source</i>, not
+object code — regeneration on the foreign kernel. The frozen pedestal shows the IFC
+condition, per-element instead of per-file.</li>
+<li>Act 5 (emit + lift .scad): transpilation to another system's source language with
+intent preserved (live params, expressions, a for-loop) + source-level lifting; the
+<code>import()</code> line is honest FFI to baked geometry.</li>
+<li>Act 6: the scoreboard — read it as a compiler pipeline diagram.</li></ol></details></div>
+
+<div class="lab"><span class="lt">Lab 3 — break the contract (20 min)</span>
+<p>In <code>demo.py</code>, change <code>EPS = 0.005</code> to <code>0.0005</code>
+(0.05%) and rerun. Predict first: what happens to the colonnade at 64 segments, whose
+faceting deficit is −0.16%?</p>
+<details><summary>Expected result</summary><p>Colonnade flips LIVE → DIVERGED (0.16% &gt;
+0.05%): the same two kernels, the same recipe — only the <i>contract</i> changed. Boxes
+stay LIVE (mesh boxes are exact). Lesson: the tolerance contract is a negotiated
+engineering parameter, not physics — exactly like choosing float equality epsilons or
+-ffast-math budgets. Restore EPS afterwards.</p></details></div>
+
+<div class="lab"><span class="lt">Lab 4 — extend the dialect (60–90 min)</span>
+<p>Add <code>geom.rotate_z %solid, angle_degrees</code> end-to-end, following the
+checklist in <code>CLAUDE.md</code> (Conventions): OP_SPECS entry in
+<code>geomir/ir.py</code> → evaluator case in <code>eval.py</code> → all three backends
+(OCCT: <code>rotate</code> about the z-axis through the origin; Manifold:
+<code>.rotate([0,0,deg])</code>; sampler: inverse-rotate the query points — mind the
+bbox: rotate its 8 corners and rebound) → <code>scad.py</code> emit
+(<code>rotate([0,0,a])</code>) and lift → a test with a closed-form check (hint: rotation
+preserves volume — assert the wall's volume is unchanged at any angle, and its bbox
+changes). Run <code>python tests/run_tests.py</code> until green.</p>
+<details><summary>Design questions to answer before coding</summary><p>Is rotate_z
+representable in all backends (yes — so no fallback path needed, unlike fillet)? Does the
+scad lifter grammar need a new statement form (yes — mirror how <code>translate</code>
+is parsed)? Does the emitted form stay in the liftable subset (keep it canonical:
+<code>rotate([0, 0, expr])</code> exactly)?</p></details></div>
+
+<div class="lab"><span class="lt">Lab 5 — hand-edit and lift (15 min)</span>
+<p>Open <code>out/model.scad</code> in a text editor (or OpenSCAD — drag the customizer
+sliders). Change <code>win_w = 1500;</code> to <code>2000</code> and add a comment. Then
+in Python: <code>from geomir import lift_scad; m,w,_ = lift_scad(open("out/model.scad").read());
+print(m.params()["win_w"], w)</code>. Your edit round-tripped through another CAD
+system's source language back into the IR; the pedestal correctly reports as unliftable —
+you are standing on the decompilation boundary.</p></div>
+
+<div class="quiz" data-yes="Yes — and that's the deepest takeaway of the labs: fallback quality is a per-element, contract-governed spectrum from fully LIVE to frozen, not a binary file-level fate."
+     data-no="Think about Acts 2–4 together: what varies per element?">
+<p class="qq">After Lab 2, "how parametric is an imported model?" has what kind of answer?</p>
+<button onclick="q(this,false)">Binary: parametric or not</button>
+<button onclick="q(this,true)">Per-element: each element lands somewhere on LIVE → DIVERGED → FALLBACK, governed by an explicit contract</button>
+<button onclick="q(this,false)">Determined by file format alone</button>
+<div class="fb"></div>
+</div>
+<label class="done"><input type="checkbox" onchange="td('m5',this)"> Mark module complete</label>
+</section>
+
+<!-- ============================ MODULE 6 ============================ -->
+<section class="mod" id="m6">
+<span class="tag">Module 6 · 30 min</span>
+<h2>Frontier: the three wedges + capstone</h2>
+<p>Where a person with both courses in their head could actually move the field
+(argued in full in <code>docs/aec-geometry-ir-analysis.md</code> §8–9):</p>
+<ol>
+<li><b>AI verification infrastructure.</b> LLMs generate code-CAD (CadQuery, KCL);
+someone must verify, canonicalize, and diff their output against intent. An IR with
+verifiers and multi-kernel lowering is that substrate — demand exists today, independent
+of any standards body.</li>
+<li><b>Lifting as a product.</b> "Dumb STEP/IFC in, native editable parametric out" —
+what Elysium CADfeature and ITI Proficiency sell at enterprise prices on old technology.
+Modern stack: ML lifting (CAD-Recode-line) + e-graph canonicalization to the target's
+idiom (Szalinski-line) + re-evaluation checking (match_cast) for trust.</li>
+<li><b>Differential kernel testing.</b> Csmith-for-geometry. Cheapest to start,
+publishable, and it manufactures the empirical semantics spec that any future
+geometry-IR standard would need. The confirmed gap is sitting there.</li>
+</ol>
+<p>And the sober note that keeps you honest: LLVM had aligned incentives; CAD's incumbent
+profits from the lossiness. Expect the architecture to arrive via AI-era wedges, not
+committee decree — watch whether IFC5's component model ever grows a recipe dialect and
+symbolic expressions.</p>
+<h3>Capstone — the one-breath versions</h3>
+<details><summary>1. State the whole thesis in three sentences.</summary><p>CAD interop
+fails because tools exchange evaluated geometry (object code) while intent lives in
+proprietary runtimes, and even the object code targets kernels with different numeric
+semantics. The fix is not one shared representation but an MLIR-style multi-level
+artifact — intent, recipe, exact geometry, mesh — with symbolic relations never baked and
+Relax-style match_cast validation at every kernel boundary, degrading per element. The
+blockers are unspecified kernel semantics and incentives, not IR design.</p></details>
+<details><summary>2. Why did the demo need TWO kernels?</summary><p>One kernel proves
+nothing about exchange — the entire problem is semantic disagreement between evaluators.
+OCCT (analytic B-rep) vs Manifold (polyhedral mesh) supplies real, measurable divergence
+((N/2π)·sin(2π/N)) and a real capability gap (fillet), so the contract and fallback have
+something genuine to catch.</p></details>
+<details><summary>3. Where exactly do LLVM, MLIR, and Relax each enter the story?</summary>
+<p>LLVM: the economic template (M+N via a shared IR) and the three preconditions that
+geometry fails — which explains 30 years of failed neutral formats. MLIR: the
+architectural correction — coexisting dialects, progressive per-element lowering, no
+single sacred level. Relax: the operational mechanics — cross-level artifacts with opaque
+foreign calls, symbolic relations instead of baked values, and match_cast's
+assert-then-check pattern at the boundary.</p></details>
+<p><b>Course sequence complete.</b> Further: re-run the labs after reading
+<code>docs/HANDOFF.md</code> §Natural next steps, and pick one.</p>
+<label class="done"><input type="checkbox" onchange="td('m6',this)"> Mark module complete</label>
+</section>
+</main>
+
+<script>
+var MODS=["m0","m1","m2","m3","m4","m5","m6"], KEY="geomir-course3";
+function store(){ try{ localStorage.setItem(KEY, JSON.stringify(Array.from(DONE))); }catch(e){} }
+function loadSet(){ try{ return new Set(JSON.parse(localStorage.getItem(KEY)||"[]")); }catch(e){ return new Set(); } }
+var DONE=loadSet();
+function render(){
+  var n=0; MODS.forEach(function(m){ if(DONE.has(m)) n++;
+    var cb=document.querySelector("#"+m+" label.done input"); if(cb) cb.checked=DONE.has(m); });
+  document.getElementById("pbar").style.width=(100*n/MODS.length)+"%";
+  document.getElementById("ptext").textContent=n+" / "+MODS.length+" modules";
+}
+function td(id, cb){ if(cb.checked) DONE.add(id); else DONE.delete(id); store(); render(); }
+function q(btn, ok){
+  var quiz=btn.closest(".quiz");
+  quiz.querySelectorAll("button").forEach(function(b){ b.classList.remove("right","wrong"); });
+  btn.classList.add(ok?"right":"wrong");
+  var fb=quiz.querySelector(".fb"); fb.style.display="block";
+  fb.className="fb"+(ok?" ok":"");
+  fb.textContent= ok ? (quiz.dataset.yes||"Correct.") : (quiz.dataset.no||"Not quite — try again.");
+}
+render();
+</script>
+</body>
+</html>
