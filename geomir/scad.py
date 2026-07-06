@@ -93,6 +93,11 @@ class _Emitter:
             for o in op.operands:
                 lines += self.stmt(o, ind + "  ")
             return lines + [f"{ind}}}"]
+        if n == "geom.intersect":
+            lines = [f"{ind}intersection() {{"]
+            for o in op.operands:
+                lines += self.stmt(o, ind + "  ")
+            return lines + [f"{ind}}}"]
         if n == "geom.difference":
             lines = [f"{ind}difference() {{"]
             for o in self._diff_chain(op):
@@ -259,7 +264,7 @@ class _Lifter:
             vec = self.vec3()
             self.eat(")")
             return ("translate", vec, self.stmt())
-        if v in ("union", "difference"):
+        if v in ("union", "difference", "intersection"):
             self.eat(); self.eat("("); self.eat(")")
             children = self.block()
             if v == "difference" and len(children) < 2:
@@ -351,12 +356,13 @@ class _Lifter:
             r = self.fresh()
             self._ops.append(Op(r, "geom.translate", [child, vec]))
             return f"%{r}"
-        if kind == "union":
+        if kind in ("union", "intersection"):
             children = [self.build_solid(c) for c in ast[1]]
             if len(children) == 1:
                 return children[0]
             r = self.fresh()
-            self._ops.append(Op(r, "geom.union", children))
+            opname = "geom.union" if kind == "union" else "geom.intersect"
+            self._ops.append(Op(r, opname, children))
             return f"%{r}"
         if kind == "difference":
             acc = self.build_solid(ast[1][0])

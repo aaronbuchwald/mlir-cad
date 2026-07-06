@@ -146,6 +146,23 @@ check(new_w is not None and new_w < old_w, "LIVE element regenerated (smaller wa
 _, new_p, note_p = regen["pedestal"]
 check(new_p is None and "FROZEN" in note_p, "fallback element frozen (the IFC condition)")
 
+print("== geom.intersect (op added via the CLAUDE.md checklist) ==")
+IX = """recipe.module @ix {
+  %a = geom.box 100.0, 100.0, 100.0
+  %b0 = geom.box 100.0, 100.0, 100.0
+  %b = geom.translate %b0, [50.0, 0.0, 0.0]
+  %i = geom.intersect %a, %b
+  recipe.export %i, "e"
+}"""
+mi = parse(IX)
+close(S.volume(evaluate_element(mi, S, "e")), 500_000, 0.02,
+      "intersect volume (two offset boxes)")
+scad_i = emit_scad(mi)
+check("intersection() {" in scad_i, "intersect lowers to OpenSCAD intersection()")
+lift_i, warn_i, _ = lift_scad(scad_i)
+close(S.volume(evaluate_element(lift_i, S, "e")), 500_000, 0.02,
+      "intersect survives scad round trip")
+
 print("== OpenSCAD emit / lift round trip ==")
 scad1 = emit_scad(m, fallback_stl={"pedestal": "pedestal_baked.stl"})
 check('import("pedestal_baked.stl")' in scad1,

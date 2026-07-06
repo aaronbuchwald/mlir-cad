@@ -43,6 +43,9 @@ class OCCTBackend:
     def difference(self, a, b):
         return a.cut(b)
 
+    def intersect(self, a, b):
+        return a.intersect(b)
+
     def fillet(self, s, r):
         # B-rep kernels support edge fillets; mesh/implicit backends do not.
         return s.edges().fillet(r)

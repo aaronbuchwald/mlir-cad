@@ -74,6 +74,17 @@ class SamplerBackend:
             return a.fn(p) & ~b.fn(p)
         return _Solid(fn, a.box)  # conservative
 
+    def intersect(self, a, b):
+        def fn(p):
+            return a.fn(p) & b.fn(p)
+        ax, ay, az, aX, aY, aZ = a.box
+        bx, by, bz, bX, bY, bZ = b.box
+        box = (max(ax, bx), max(ay, by), max(az, bz),
+               min(aX, bX), min(aY, bY), min(aZ, bZ))
+        if box[0] >= box[3] or box[1] >= box[4] or box[2] >= box[5]:
+            box = (box[0], box[1], box[2], box[0], box[1], box[2])  # empty
+        return _Solid(fn, box)
+
     def fillet(self, s, r):
         raise UnsupportedOp(self.name, "geom.fillet")
 

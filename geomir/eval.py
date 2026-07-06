@@ -123,6 +123,11 @@ def _eval_op(op: Op, env: dict, bindings: dict, backend):
     if n == "geom.difference":
         return backend.difference(_solid(env, op.operands[0]),
                                   _solid(env, op.operands[1]))
+    if n == "geom.intersect":
+        acc = _solid(env, op.operands[0])
+        for o in op.operands[1:]:
+            acc = backend.intersect(acc, _solid(env, o))
+        return acc
     if n == "geom.repeat_x":
         s = _solid(env, op.operands[0])
         count = int(round(_scalar(env, op.operands[1])))

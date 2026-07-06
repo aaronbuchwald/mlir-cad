@@ -51,6 +51,7 @@ OP_SPECS: dict[str, dict] = {
     "geom.translate": {"sig": ["g", "v3"], "result": "solid"},
     "geom.union":     {"sig": ["g", "g"], "result": "solid", "variadic": True},
     "geom.difference": {"sig": ["g", "g"], "result": "solid"},
+    "geom.intersect": {"sig": ["g", "g"], "result": "solid", "variadic": True},
     "geom.repeat_x":  {"sig": ["g", "s", "s"], "result": "solid",
                        "doc": "repeat_x(solid, count, spacing): union of count copies"},
     # ops with restricted backend support (exercise partial lowering /

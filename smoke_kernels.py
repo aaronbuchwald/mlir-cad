@@ -34,6 +34,9 @@ try:
                        k.translate(k.box(50, 200, 50), -1, -50, 25))
     check(rel(k.volume(cut), 1_000_000 - 50 * 100 * 50) < 1e-9,
           "boolean difference exact")
+    ix = k.intersect(k.box(100, 100, 100),
+                     k.translate(k.box(100, 100, 100), 50, 0, 0))
+    check(rel(k.volume(ix), 500_000) < 1e-9, "boolean intersect exact")
     f = k.fillet(k.box(100, 100, 100), 10)
     vf = k.volume(f)
     check(0.90 < vf / 1_000_000 < 1.0, f"fillet supported (v={vf:,.0f})")
@@ -61,6 +64,9 @@ try:
                        m.translate(m.box(50, 200, 50), -1, -50, 25))
     check(rel(m.volume(cut), 1_000_000 - 50 * 100 * 50) < 1e-9,
           "boolean difference exact")
+    ix = m.intersect(m.box(100, 100, 100),
+                     m.translate(m.box(100, 100, 100), 50, 0, 0))
+    check(rel(m.volume(ix), 500_000) < 1e-9, "boolean intersect exact")
     try:
         m.fillet(m.box(10, 10, 10), 1)
         check(False, "fillet should be unsupported on a mesh kernel")

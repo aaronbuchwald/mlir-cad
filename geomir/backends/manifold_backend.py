@@ -50,6 +50,9 @@ class ManifoldBackend:
     def difference(self, a, b):
         return a - b
 
+    def intersect(self, a, b):
+        return a ^ b
+
     def fillet(self, s, r):
         # Edge fillets need B-rep topology (edges as first-class entities);
         # a mesh kernel has only triangles. This is the honest gap that
