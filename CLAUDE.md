@@ -26,6 +26,8 @@ CLAUDE.md                          this index
 README.md                          demo quickstart + what each act proves
 docs/
   HANDOFF.md                       continuation handoff (state, next steps)
+  ROADMAP.md                       full project roadmap, Fable-5 workforce
+                                   model, human checkpoints (HC-0..13)
   aec-geometry-ir-analysis.md      main analysis report (kernels, IFC, LLVM/
                                    MLIR/Relax mapping, viable architecture)
   research/
@@ -66,6 +68,22 @@ geomir/
 recipes/studio_wall.ir             demo model: wall+window+door (symbolic
                                    centering expr), colonnade (repeat_x),
                                    filleted pedestal (B-rep-only op)
+conformance/                       the target-onboarding harness
+  registry.py                      backend registry + tolerance contracts
+  corpus/                          graded recipes L0..L4 + expected.json
+                                   (closed-form oracles)
+  run.py                           runner: per-op smoke, match_cast corpus,
+                                   scad roundtrip, report card, and
+                                   AUTO-GENERATED capability manifests
+  generate.py                      grammar-directed recipe fuzzer +
+                                   differential mode (Csmith-for-kernels)
+  targets/                         committed capability manifests (observed,
+                                   never hand-edited)
+.claude/skills/add-geomir-target/  agent playbook for onboarding a new
+                                   backend (phases, gates, HC checklist,
+                                   Tekla appendix)
+.github/workflows/conformance.yml  CI: pure-python + kernel jobs; commented
+                                   stanzas for license-gated tiers
 demo.py                            six-act walkthrough (see README)
 smoke_kernels.py                   kernel API drift canary — run first on a
                                    new machine; exact expected volumes

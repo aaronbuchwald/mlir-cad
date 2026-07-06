@@ -80,6 +80,14 @@ validation (volume+bbox only).
 
 ## Natural next steps
 
+**Superseded by `docs/ROADMAP.md`** (full phased plan, Fable-5 workforce
+model, human checkpoints HC-0..13). Phase 0 — the conformance harness,
+differential fuzzer, capability manifests, `geom.intersect`, the
+`add-geomir-target` skill, and CI — was built and committed 2026-07-06.
+Pending: HC-0 (run `python -m conformance.run --backend occt --backend
+manifold` on a kernel-equipped machine; manifests for occt/manifold commit
+from that run). The list below is kept for historical context.
+
 Ranked roughly by value-per-effort: (1) run setup on a real machine, fix any
 kernel drift; (2) tighten validation — Hausdorff/containment sampling
 instead of volume+bbox; (3) third backend with implicit math (sdf/libfive)

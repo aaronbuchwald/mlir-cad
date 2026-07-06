@@ -1,6 +1,6 @@
 {
  "target": "sampler",
- "generated": "2026-07-06T22:26:36.269671+00:00",
+ "generated": "2026-07-06T22:31:02.273951+00:00",
  "geomir_version": "0.1.0",
  "backend": {
   "module": "geomir.backends.sampler",

@@ -1,0 +1,66 @@
+name: conformance
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 5 * * *"   # nightly differential campaign (Phase 4)
+
+jobs:
+  pure-python:
+    # No kernels needed: IR, artifact/match_cast logic, scad emit/lift,
+    # sampler backend, generator determinism.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install numpy
+      - run: python tests/run_tests.py
+      - run: python -m conformance.run --backend sampler
+      - run: python -m conformance.generate --mode diff --seeds 40
+             --backend sampler --backend sampler_coarse --out findings-pure.jsonl
+      - uses: actions/upload-artifact@v4
+        with: { name: findings-pure, path: findings-pure.jsonl }
+
+  kernels:
+    # Real kernels: OCCT (cadquery) + Manifold. Linux wheels via pip.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -r requirements.txt
+      - run: python smoke_kernels.py
+      - run: python tests/run_tests.py
+      - run: python -m conformance.run --backend occt --backend manifold --backend manifold12
+      - run: python -m conformance.generate --mode diff --seeds 150
+             --backend occt --backend manifold --backend sampler --out findings.jsonl
+      - uses: actions/upload-artifact@v4
+        with: { name: findings-kernels, path: findings.jsonl }
+      - uses: actions/upload-artifact@v4
+        with: { name: capability-manifests, path: conformance/targets/ }
+
+  # ---------------------------------------------------------------------
+  # Phase 2+ stanzas — enable when the human checkpoints clear
+  # (docs/ROADMAP.md). Left commented deliberately.
+  # ---------------------------------------------------------------------
+  #
+  # onshape:                      # HC-3/HC-4: account + API keys as secrets
+  #   runs-on: ubuntu-latest
+  #   if: ${{ secrets.ONSHAPE_ACCESS_KEY != '' }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with: { python-version: "3.11" }
+  #     - run: pip install -r requirements.txt
+  #     - run: python -m conformance.run --backend onshape
+  #       env:
+  #         ONSHAPE_ACCESS_KEY: ${{ secrets.ONSHAPE_ACCESS_KEY }}
+  #         ONSHAPE_SECRET_KEY: ${{ secrets.ONSHAPE_SECRET_KEY }}
+  #
+  # tekla:                        # HC-7: licensed Windows self-hosted runner
+  #   runs-on: [self-hosted, windows, tekla]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - run: python -m conformance.run --backend tekla

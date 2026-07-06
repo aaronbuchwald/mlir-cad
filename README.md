@@ -104,6 +104,21 @@ at 0/N. The only sharing case is two people using the *same* browser
 profile on the *same* computer; for that, each course header has a
 **reset** link that clears its progress.
 
+## Conformance harness (adding targets)
+
+```bash
+python -m conformance.run --backend occt --backend manifold --backend sampler
+python -m conformance.generate --mode diff --seeds 200 \
+    --backend occt --backend manifold      # differential kernel testing
+```
+
+The runner measures per-op support and tolerance behavior against a graded
+corpus with closed-form oracles, prints a report card, and auto-generates
+each target's capability manifest (`conformance/targets/`). Onboarding a new
+backend (Tekla, Revit, Onshape, IFC…) is a gated playbook — see
+`.claude/skills/add-geomir-target/SKILL.md` and `docs/ROADMAP.md` for the
+phases and the human checkpoints (licenses, installs, credentials).
+
 ## More in this repo
 
 `CLAUDE.md` is the full index. `docs/HANDOFF.md` carries session state and
