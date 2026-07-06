@@ -207,6 +207,25 @@ h1 = hausdorff((BOXV, BOXF), (BOXV2, BOXF), n=600)
 check(0.4 < h1 < 0.85, f"shifted cube Hausdorff ~0.5 (got {h1:.3f})")
 check(h1 > 2 * h0, "deep check separates identical from shifted surfaces")
 
+print("== emitters: FreeCAD macro + IFC (structure-level checks) ==")
+import ast as _ast  # noqa: E402
+from geomir.freecad_script import emit_freecad  # noqa: E402
+
+fc_src = emit_freecad(m)
+_ast.parse(fc_src)  # must be valid Python
+check("Part.makeBox" in fc_src and "makeFillet" in fc_src and
+      'P["wall_len"]' in fc_src, "FreeCAD macro emits valid, parametric Python")
+check("(P[\"wall_len\"] - P[\"win_w\"])" in fc_src.replace("'", '"'),
+      "symbolic expression survives into FreeCAD source")
+import geomir.ifc_export as _ifc  # noqa: E402
+_ast.parse(open(_ifc.__file__).read())
+xf = _ifc._XF(0.0, (10, 0, 0)).then_local(_ifc._XF(0.0, (5, 5, 0)))
+check(xf.t == (15.0, 5.0, 0.0), "IFC transform composition: translations add")
+import math as _math  # noqa: E402
+xr = _ifc._XF(_math.pi / 2).then_local(_ifc._XF(0.0, (10, 0, 0)))
+check(abs(xr.t[0]) < 1e-9 and abs(xr.t[1] - 10) < 1e-9,
+      "IFC transform composition: rotation applies to child offsets")
+
 print("== random recipe generator (differential fuzzer seed) ==")
 from conformance.generate import gen_recipe  # noqa: E402
 
