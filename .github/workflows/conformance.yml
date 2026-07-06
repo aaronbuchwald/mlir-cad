@@ -3,56 +3,82 @@ name: conformance
 on:
   push:
   pull_request:
+  workflow_dispatch:
   schedule:
-    - cron: "17 5 * * *"   # nightly differential campaign (Phase 4)
+    - cron: "17 5 * * *"   # nightly differential campaign (ROADMAP Phase 4)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   pure-python:
     # No kernels needed: IR, artifact/match_cast logic, scad emit/lift,
-    # sampler backend, generator determinism.
+    # sampler backend, generator determinism, emitter structure checks.
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: "3.11" }
+        with:
+          python-version: "3.11"
+          cache: pip
       - run: pip install numpy
       - run: python tests/run_tests.py
       - run: python -m conformance.run --backend sampler
-      - run: python -m conformance.generate --mode diff --seeds 40
-             --backend sampler --backend sampler_coarse --out findings-pure.jsonl
+      - run: python -m conformance.generate --mode diff --seeds 40 --backend sampler --backend sampler_coarse --out findings-pure.jsonl
       - uses: actions/upload-artifact@v4
-        with: { name: findings-pure, path: findings-pure.jsonl }
+        if: always()
+        with:
+          name: findings-pure
+          path: findings-pure.jsonl
+          if-no-files-found: ignore
 
   kernels:
-    # Real kernels: OCCT (cadquery) + Manifold. Linux wheels via pip.
+    # Real kernels: OCCT (cadquery) + Manifold, linux wheels via pip.
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: "3.11" }
+        with:
+          python-version: "3.11"
+          cache: pip
       - run: pip install -r requirements.txt
       - run: python smoke_kernels.py
       - run: python tests/run_tests.py
       - run: python -m conformance.run --backend occt --backend manifold --backend manifold12
-      - run: python -m conformance.generate --mode diff --seeds 150
-             --backend occt --backend manifold --backend sampler --out findings.jsonl
+      - run: python -m conformance.generate --mode diff --seeds 150 --backend occt --backend manifold --backend sampler --out findings.jsonl
       - uses: actions/upload-artifact@v4
-        with: { name: findings-kernels, path: findings.jsonl }
+        if: always()
+        with:
+          name: findings-kernels
+          path: findings.jsonl
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
-        with: { name: capability-manifests, path: conformance/targets/ }
+        if: always()
+        with:
+          name: capability-manifests
+          path: conformance/targets/
+          if-no-files-found: ignore
 
-  # ---------------------------------------------------------------------
-  # Phase 2+ stanzas — enable when the human checkpoints clear
-  # (docs/ROADMAP.md). Left commented deliberately.
-  # ---------------------------------------------------------------------
+  # -------------------------------------------------------------------------
+  # Phase 2+ stanzas — enable when the human checkpoints clear (docs/ROADMAP.md).
+  # Note: the `secrets` context is NOT available in job-level `if`; gate
+  # optional jobs on a repository *variable* and pass secrets via env.
+  # -------------------------------------------------------------------------
   #
-  # onshape:                      # HC-3/HC-4: account + API keys as secrets
+  # onshape:                      # HC-3/HC-4: account + API keys as secrets;
+  #   if: ${{ vars.ONSHAPE_ENABLED == 'true' }}   # set repo variable to enable
   #   runs-on: ubuntu-latest
-  #   if: ${{ secrets.ONSHAPE_ACCESS_KEY != '' }}
+  #   timeout-minutes: 20
   #   steps:
   #     - uses: actions/checkout@v4
   #     - uses: actions/setup-python@v5
-  #       with: { python-version: "3.11" }
+  #       with: { python-version: "3.11", cache: pip }
   #     - run: pip install -r requirements.txt
   #     - run: python -m conformance.run --backend onshape
   #       env:
@@ -60,7 +86,9 @@ jobs:
   #         ONSHAPE_SECRET_KEY: ${{ secrets.ONSHAPE_SECRET_KEY }}
   #
   # tekla:                        # HC-7: licensed Windows self-hosted runner
+  #   if: ${{ vars.TEKLA_RUNNER_ENABLED == 'true' }}
   #   runs-on: [self-hosted, windows, tekla]
+  #   timeout-minutes: 45
   #   steps:
   #     - uses: actions/checkout@v4
   #     - run: python -m conformance.run --backend tekla
