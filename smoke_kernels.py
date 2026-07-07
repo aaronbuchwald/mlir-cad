@@ -30,8 +30,10 @@ try:
           "box volume exact")
     check(rel(k.volume(k.cylinder(50, 100)), math.pi * 2500 * 100) < 1e-9,
           "cylinder volume = pi*r^2*h to machine precision (analytic surface)")
+    # cut spans x[25,75] (fully interior), y[-50,150] (through), z[25,75]
+    # -> removes exactly 50*100*50 = 250,000
     cut = k.difference(k.box(100, 100, 100),
-                       k.translate(k.box(50, 200, 50), -1, -50, 25))
+                       k.translate(k.box(50, 200, 50), 25, -50, 25))
     check(rel(k.volume(cut), 1_000_000 - 50 * 100 * 50) < 1e-9,
           "boolean difference exact")
     ix = k.intersect(k.box(100, 100, 100),
@@ -61,7 +63,7 @@ try:
           f"cylinder volume = inscribed-polygon prism "
           f"({(inscribed-1)*100:+.3f}% vs analytic — the different math)")
     cut = m.difference(m.box(100, 100, 100),
-                       m.translate(m.box(50, 200, 50), -1, -50, 25))
+                       m.translate(m.box(50, 200, 50), 25, -50, 25))
     check(rel(m.volume(cut), 1_000_000 - 50 * 100 * 50) < 1e-9,
           "boolean difference exact")
     ix = m.intersect(m.box(100, 100, 100),
