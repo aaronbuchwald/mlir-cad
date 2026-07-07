@@ -14,6 +14,8 @@ $PY -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip -q
 pip install -r requirements.txt
+# optional: IFC export support (geomir.ifc_export); wheel coverage varies
+pip install ifcopenshell || echo "NOTE: ifcopenshell unavailable for this python/platform — IFC export disabled, everything else unaffected"
 
 echo
 echo "== pure-python test suite (IR / artifact / match_cast / scad) =="

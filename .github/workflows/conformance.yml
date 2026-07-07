@@ -47,7 +47,10 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install -r requirements.txt
+      - name: Install kernels (cadquery/OCP, manifold3d, trimesh, numpy)
+        run: pip install -r requirements.txt
+      - name: Show resolved environment (diagnostics)
+        run: pip freeze | grep -Ei "cadquery|ocp|manifold|trimesh|numpy" && pip check
       - run: python smoke_kernels.py
       - run: python tests/run_tests.py
       - run: python -m conformance.run --backend occt --backend manifold --backend manifold12

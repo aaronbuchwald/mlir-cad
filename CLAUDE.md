@@ -101,7 +101,7 @@ smoke_kernels.py                   kernel API drift canary — run first on a
                                    new machine; exact expected volumes
 tests/run_tests.py                 51 pure-Python checks, no kernels needed
 setup.sh / requirements.txt        venv + cadquery, manifold3d, trimesh,
-                                   numpy, ifcopenshell
+                                   numpy (ifcopenshell optional, IFC only)
 out/                               committed reference outputs from the
                                    verified macOS run (2026-07-04):
                                    model.step (FreeCAD), model.scad

@@ -9,7 +9,6 @@ that's what this checklist closes. Check items off in order.
 
 ```bash
 cd ~/code/prototypes/mlir-cad && source .venv/bin/activate
-pip install -r requirements.txt          # picks up new dep: ifcopenshell
 python smoke_kernels.py                  # must end KERNEL SMOKE TEST PASSED
 python demo.py
 ```
@@ -43,6 +42,7 @@ python -m conformance.run --backend occt --backend manifold --backend manifold12
 New emitters (first-ever execution — Fable could not run these):
 
 ```bash
+pip install ifcopenshell   # optional dep, only for IFC export (lazy import)
 python -m geomir.freecad_script recipes/studio_wall.ir out/model_freecad.py
 python -m geomir.ifc_export out/studio_wall.artifact.json out/model.ifc
 ```

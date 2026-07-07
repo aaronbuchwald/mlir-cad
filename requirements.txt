@@ -2,4 +2,6 @@ cadquery>=2.4
 manifold3d>=2.5
 trimesh>=4.0
 numpy>=1.24
-ifcopenshell>=0.7
+# Optional — needed only for `python -m geomir.ifc_export` (lazy import).
+# PyPI wheel coverage for ifcopenshell varies by python/platform, so it is
+# deliberately NOT a hard requirement:  pip install ifcopenshell

@@ -128,6 +128,7 @@ phases and the human checkpoints (licenses, installs, credentials).
 More targets and views:
 
 ```bash
+pip install ifcopenshell   # optional, IFC export only (lazy import)
 python -m geomir.ifc_export out/studio_wall.artifact.json out/model.ifc   # openBIM
 python -m geomir.freecad_script recipes/studio_wall.ir out/model_freecad.py
 open courses/04-two-kernels-live.html    # interactive two-kernel walkthrough
