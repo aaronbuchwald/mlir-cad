@@ -216,6 +216,32 @@ practiced, but no academic paper formalizes it.
   found in the MLIR sense** — the pieces exist separately. That absence is
   the opportunity this repo's demo sketches.
 
+## Industry status of this direction (checked 2026-07-07)
+
+- **Mesh→CAD lifting reached production via ML, not synthesis:**
+  [Backflip AI](https://www.backflip.ai/) — out of stealth 2025, $30M
+  (NEA + a16z), foundation model on 100M synthetic geometries; 3D scan/mesh
+  → parametric, **native-format SOLIDWORKS parts** via plugin
+  ([3DPI](https://3dprintingindustry.com/news/new-ai-model-from-backflip-accelerates-3d-scan-to-cad-237055/),
+  [DEVELOP3D](https://develop3d.com/cad/backflip-introduces-mesh-to-cad/)).
+  Reincarnate's exact use case, commercialized. Nobody found ships
+  *contract-verified* lifting (output diffed against source geometry) —
+  the verified-oracle slot is empty.
+- **E-graphs in production — compilers only:** Cranelift's acyclic
+  e-graphs (ægraphs) are the mid-end of a shipping production compiler
+  ([cfallin, 2026](https://cfallin.org/blog/2026/04/09/aegraph/)); MLIR
+  eqsat dialect (2025) at integration stage. No CAD product ships
+  Szalinski-style structuring.
+- **Robust-geometry substrate shipped:** Manifold's mesh CSG is
+  non-experimental in OpenSCAD since 2024.09 (user-selectable backend;
+  CGAL still default as of last confirmed info)
+  ([openscad list](https://lists.openscad.org/empathy/thread/D6KV3ZLXHLBHSITSQ5GPUZUKHURU4ABE)).
+- **Verified/denotational geometry: nowhere in production.** No kernel
+  spec, no verified geometry compiler, no differential-testing campaign
+  (gap §6 unchanged).
+- **AEC lane: empty.** No production parametric lifting of IFC beyond
+  heuristic importers; semantic enrichment remains academic.
+
 ## Flags / unverified
 
 1. "No MLIR/LLVM-style IR for CAD/BIM" and "no kernel fuzzing campaign" —
