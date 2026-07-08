@@ -6,10 +6,79 @@ documented "no MLIR-for-CAD exists" gap.
 
 ## 1. UW PLSE line: Reincarnate, Szalinski, egg
 
-- **Reincarnate (ICFP 2018)** — functional 3D CAD language with denotational
-  semantics for CAD and meshes + synthesis that reverse-engineers CAD
-  programs from meshes ("mesh decompilation")
-  ([artifact repo](https://github.com/uwplse/reincarnate-aec)).
+### Reincarnate (ICFP 2018) — primary source read in full 2026-07-07
+
+Nandi, Wilcox, Panchekha, Blau, Grossman, Tatlock, *Functional Programming
+for Compiling and Decompiling Computer-Aided Design*, PACMPL 2(ICFP):99
+([PDF](https://ttaylorr.com/publications/reincarnate-icfp18.pdf),
+[artifact repo](https://github.com/uwplse/reincarnate-aec),
+[tool site](http://incarnate.uwplse.org/)). ~20k LOC OCaml.
+
+**What it does.** Treats the 3D-printing pipeline as compilation
+(CAD → mesh → slices → G-code ≈ source → IR → asm; meshes are designs with
+structure "compiled away", explicitly analogized to stripped binaries).
+Four contributions:
+1. **λCAD**: purely functional CAD language — primitives (Cube,
+   Cylinder(n) = n-gon prism), affine transforms, CSG booleans, plus let/
+   functions/recursion. All primitives piecewise-linear; true curves
+   explicitly deferred ("compositional notion of equality between
+   piecewise-linear approximations to curves ... significant challenge
+   left for future work").
+2. **Denotational semantics for BOTH languages** to point sets in R³:
+   CAD compositionally; meshes via ray-casting parity (`InsideVia`: a point
+   is inside iff a "good" halfline crosses an odd number of faces; theorems
+   that almost all directions are good and the choice doesn't matter).
+3. **Verified compiler** CAD→mesh (split-then-classify booleans on meshes,
+   correctness proof against the denotations).
+4. **ReIncarnate — the first mesh→CAD synthesis algorithm**: rephrase the
+   compiler as small-step with evaluation contexts, "flip the arrows" into
+   a synthesis relation driven by three **geometric oracles** with formal
+   specs (⟦oracle output⟧ = ⟦input mesh⟧): **Ωprim** recognizes
+   affine-transformed primitives via *canonicalization* (dominant-axis
+   detection from face-group normal areas → Euler-angle de-rotation →
+   unit-scale → center; then re-orient the matched primitive back);
+   **Ωadd** splits meshes (connected components / convex rings / face-group
+   features); **Ωsub** finds a snug bounding primitive and emits
+   bound − residual (i.e., hole recovery). Worklist search with fuel,
+   focus/schedule heuristics, restricted target grammar S (booleans above
+   affines above primitives; intersections rewritten away), ranked by
+   **≤edit** (proxy: program size), with a required *predictability*
+   fixed point: synth(compile(synth(m))) = synth(m). Case studies lift
+   Thingiverse STLs (candle holder: hundreds of faces → 20-line program)
+   and enable edits that break mesh editors.
+5. **Numerics** (§8.1): floats break decidable geometric equality; they
+   prototype exact arithmetic over a splitting field ℚ-basis of
+   cos(πi/2n) — correct but ~600× slower; the codebase is functorized over
+   NumSys (float/MPFR/exact) and designed for differential testing against
+   OpenSCAD — both 2018 foreshadowings of this repo's tolerance-contract
+   and fuzzer choices.
+
+**How it fits geomir** (the mapping is nearly 1:1):
+- λCAD ≈ the recipe dialect op-for-op — with one instructive difference:
+  their `Cylinder(n)` puts faceting *in the program*; geomir moved it to
+  backend lowering policy (the -ffast-math lesson from Relax). Their only
+  target was mesh, so the distinction didn't bite them.
+- Their mesh denotation (ray-parity point membership) **is** the sampler
+  backend: `backends/sampler.py` is a Monte Carlo implementation of their
+  ⟦·⟧. Their formalism supplies the theory story for the conformance
+  harness: ops specified denotationally, kernels as implementations
+  checked against the denotation.
+- Their oracle specs assume exact equality ⟦m⟧ = ⟦c⟧ — unenforceable under
+  floating point (their own §8.1 admission). geomir's match_cast is the
+  missing enforcement: **verified oracles** — speculate structurally,
+  check numerically against the shipped baked oracle within ε. Their named
+  open problem (equality between piecewise-linear approximations of
+  curves) is answered pragmatically by the tolerance contract.
+- Ωsub is the money oracle for AEC lifting: "snug bound minus residual" is
+  literally wall-minus-openings. Phase 4 lifting v0 should implement
+  Ωprim/Ωsub over B-rep/mesh with match_cast-gated acceptance (see
+  ROADMAP).
+- Their flat output (ICFP letters: 89 LOC of repeated Translate/Scale/Cube)
+  is the exact gap Szalinski closed two years later with e-graphs —
+  confirming the pipeline stack: oracle/neural decompiler → e-graph
+  structuring → per-target emission.
+- Their predictability fixed point = geomir's emit→lift→emit fixed-point
+  tests, independently reinvented.
 - **Szalinski (PLDI 2020)** — mesh decompilers emit *flat* CSG; Szalinski is
   a second decompilation stage shrinking flat CSG into structured programs
   with map/fold operators, via **equality saturation** with CAD rewrites and

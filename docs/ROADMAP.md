@@ -95,9 +95,19 @@ backend can be onboarded by following the skill with zero tribal knowledge.
 - [F] E-graph canonicalization pass over the recipe dialect (Szalinski-style): re-idiomize
   constructions per target before emission; capability-aware extraction (cost=∞ for
   unsupported ops) so fallback-to-baked becomes last resort after semantic search.
-- [F] Lifting v0: extrusion/pattern recognition from STEP/OCCT B-rep (classical feature
-  recognition before ML); then CAD-Recode-style model-assisted lifting behind the same
-  match_cast verification gate.
+- [F] Lifting v0 — **verified-oracle architecture** (Reincarnate ICFP'18,
+  primary-source integrated 2026-07-07; see research/compilers-for-cad.md §1):
+  implement Ωprim (primitive recognition via canonicalization: face-group
+  normals → de-rotate/de-scale/center → match → re-orient) and Ωsub (snug
+  bounding primitive minus residual — i.e. wall-minus-openings, the money
+  oracle for prismatic AEC) over meshes/B-rep, inside a fueled worklist
+  search ranked by editability; **every oracle proposal gated by match_cast**
+  against the input geometry (their exact-equality oracle specs are
+  unenforceable under floats — our tolerance contract is the enforcement
+  layer they lacked). Then Szalinski-style e-graph structuring (recover
+  repeat_x/params from flat output), then CAD-Recode-style model-assisted
+  proposals behind the same gate. Include their predictability property
+  (synth∘compile∘synth = synth) as a conformance-style test.
 - [F] Sketch-constraint dialect design (the D-Cubed-shaped hole) — research doc first;
   solver choice (write vs license) is [HC-10] a build-vs-buy + budget decision.
 

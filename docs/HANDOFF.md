@@ -46,6 +46,12 @@ checkpoints), `docs/VERIFICATION.md` (the human checklist currently pending),
    `import_artifact(deep=True)`), FreeCAD macro emitter (ast-verified),
    IFC4 CSG exporter (**UNVERIFIED** — first ifcopenshell run pending),
    fuzzer/corpus coverage for new ops, `docs/VERIFICATION.md`.
+10. **Reincarnate integrated from primary source** (2026-07-07): the ICFP'18
+   paper read in full; deep-dive + geomir fit mapping in
+   `research/compilers-for-cad.md` §1 (λCAD ≈ recipe dialect; their mesh
+   denotation ≈ the sampler; their exact-equality oracle specs are what
+   match_cast enforces under floats; Ωsub = wall-minus-openings). Phase 4
+   lifting item rewritten as a concrete verified-oracle architecture.
 
 ## Core thesis (compressed)
 
